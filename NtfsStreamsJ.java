@@ -15,11 +15,11 @@ import static plugins.wdx.FieldValue.*;
  * <p>
  * Frank Heyne's <a href="http://www.heysoft.de/en/software/lads.php?lang=EN">LADS.exe</a> v4.10
  * <p>
- * since Windows Vista: dir /r
+ * since Windows Vista: dir /r 
  */
-public class ADS extends WDXPluginAdapter {
+public class NtfsStreamsJ extends WDXPluginAdapter {
 
-    private Log log = LogFactory.getLog(ADS.class);
+    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
     
     private static class AlternateDataStream {
         private final String fileName;
