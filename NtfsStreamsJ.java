@@ -20,7 +20,7 @@ import static plugins.wdx.FieldValue.*;
 public class NtfsStreamsJ extends WDXPluginAdapter {
 
     private Log log = LogFactory.getLog(NtfsStreamsJ.class);
-    
+
     private static class AlternateDataStream {
         private final String fileName;
         private final String rawName;
@@ -50,26 +50,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         }
     
     }
-    
-    private String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\ADS\\streams.exe";
-    private String lads_exe = "c:\\Programme\\totalcmd\\plugins\\lads.exe";
 
-    private final Matcher streamsOutMatcher = Pattern.compile("^\\s+:([^:]*):\\$DATA\\t(\\d+)$").matcher("");
-    private final Matcher ladsOutMatcher = Pattern.compile("^\\s(\\d+)\\s+(.+):([^:]*)$").matcher("");
-
-    public int contentGetSupportedField(int fieldIndex,
-                                         StringBuffer fieldName,
-                                         StringBuffer units,
-                                         int maxlen)
-        {
-        switch (fieldIndex) {
-            case 0:
-                fieldName.append("streamCount");
-                return FT_NUMERIC_32;
-        }
-        return FT_NOMOREFIELDS;
-    }
-    
     public static final int CP_HASH        = 0x23;  // "#".codePointAt(0);
     public static final int CP_ASTERISK    = 0x2A;  // "*".codePointAt(0);
     public static final int CP_QUESTION    = 0x3F;  // "?".codePointAt(0);
@@ -78,8 +59,18 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     public static final int CP_LT          = 0x3C;  // "<".codePointAt(0);
     public static final int CP_SLASH       = 0x2F;  // "/".codePointAt(0);
     public static final int CP_BACKSLASH   = 0x5C;  // "\\".codePointAt(0);
-    
-    
+
+
+    private String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe";
+    private String lads_exe = "c:\\Programme\\totalcmd\\plugins\\NtfsStreamsJ\\lads.exe";
+
+    private final Matcher streamsOutMatcher = Pattern.compile("^\\s+:([^:]*):\\$DATA\\t(\\d+)$").matcher("");
+    private final Matcher ladsOutMatcher = Pattern.compile("^\\s(\\d+)\\s+(.+):([^:]*)$").matcher("");
+
+    public NtfsStreamsJ() {
+        log.debug(NtfsStreamsJ.class.getName());
+    }
+
     private static StringBuilder appendEscaped(StringBuilder sb, int codePoint) {
         String hs = Integer.toHexString(codePoint);
         sb.append('#');
@@ -162,7 +153,20 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         }
         return result;
     }
-    
+
+    public int contentGetSupportedField(int fieldIndex,
+                                         StringBuffer fieldName,
+                                         StringBuffer units,
+                                         int maxlen)
+        {
+        switch (fieldIndex) {
+            case 0:
+                fieldName.append("streamCount");
+                return FT_NUMERIC_32;
+        }
+        return FT_NOMOREFIELDS;
+    }
+
     public int contentGetValue(String fileName,
                                 int fieldIndex,
                                 int unitIndex,
