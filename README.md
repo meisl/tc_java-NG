@@ -1,6 +1,6 @@
 TODO (a lot...!)
 
-...for now let me just point you to this thread on the TotalCommand forum:
+...for now let me just point you to this thread on the TotalCommander forum:
 * [Let's make writing Java plugins fun!](http://ghisler.ch/board/viewtopic.php?t=39016)
 
 and then some links you will be going to over and over:
