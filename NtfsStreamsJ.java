@@ -128,20 +128,59 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         return stdoutReader;
     }
     
+    private Iterable<String> matchingLines(final Matcher m, final LineNumberReader r) {
+        return new Iterable<String>() {
+            private boolean canGetIterator = true;
+            private String nextLine = null;
+            public Iterator<String> iterator() {
+                if (canGetIterator) {
+                    return new Iterator<String>() {
+                        public boolean hasNext() {
+                            try {
+                                if (nextLine == null) {
+                                    while ((nextLine = r.readLine()) != null) {
+                                        m.reset(nextLine);
+                                        if (m.matches()) {
+                                            return true;
+                                        }
+                                    }
+                                    nextLine = null;
+                                }
+                                return nextLine != null;
+                            } catch (IOException e) {
+                                log.error(e);
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        public String next() {
+                            if (hasNext()) {
+                                String result = nextLine;
+                                nextLine = null;
+                                return result;
+                            }
+                            throw new NoSuchElementException();
+                        }
+                        public void remove() {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
+                } else {
+                    throw new IllegalStateException("can iterate only once");
+                }
+            }
+        };
+    }
+    
     public List<AlternateDataStream> getStreamsWithHelper(final String helperExeName, final String fileName) throws IOException, InterruptedException {
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
         if (helperExeName.equals(streams_exe)) {
             try {
                 LineNumberReader stdoutReader = getRawHelperOutput(helperExeName, fileName);
-                String line;
                 Matcher m = this.streamsOutMatcher;
-                while ((line = stdoutReader.readLine()) != null) {
-                    m.reset(line);
-                    if (m.matches()) {
-                        AlternateDataStream s = new AlternateDataStream(fileName, m.group(1), Integer.parseInt(m.group(2), 10));
-                        result.add(s);
-                        log.debug(s.getName() + ":" + s.length());
-                    }
+                for (String line: matchingLines(m, stdoutReader)) {
+                    AlternateDataStream s = new AlternateDataStream(fileName, m.group(1), Integer.parseInt(m.group(2), 10));
+                    result.add(s);
+                    log.debug(s.getName() + ":" + s.length());
                 }
                 stdoutReader.close();
             } catch (Exception e) {
