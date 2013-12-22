@@ -84,6 +84,10 @@ public class AlternateDataStream {
         }
         return this.name;
     }
+    
+    public String toString() {
+        return ":" + this.length() + ":" + this.getName();
+    }
 
 }
 

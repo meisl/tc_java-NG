@@ -1,5 +1,12 @@
 @echo off
 
+del Zone.Identifier.tst 2>NUL
+echo [ZoneTransfer]>>"Zone.Identifier.tst:Zone.Identifier"
+echo ZoneId=3 >>"Zone.Identifier.tst:Zone.Identifier"
+
+mkdir foldersCanHaveStreamsToo 2>NUL
+echo bar >"foldersCanHaveStreamsToo:foo"
+
 del weirdStreamNames.tst 2>NUL
 echo >"weirdStreamNames.tst:$"
 echo >"weirdStreamNames.tst:&"
@@ -42,9 +49,4 @@ echo \u001e >"weirdStreamNames.tst:(0x1e)"
 echo \u001f >"weirdStreamNames.tst:(0x1f)"
 REM \u0020 SPACE
 
-del Zone.Identifier.tst 2>NUL
-echo [ZoneTransfer]>>"Zone.Identifier.tst:Zone.Identifier"
-echo ZoneId=3 >>"Zone.Identifier.tst:Zone.Identifier"
-
-mkdir foldersCanHaveStreamsToo 2>NUL
-echo bar >"foldersCanHaveStreamsToo:foo"
+:DONE
