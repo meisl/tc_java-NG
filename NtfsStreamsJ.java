@@ -26,7 +26,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         ),
         LADS(
             "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe",
-            "^\\s*(\\d+)\\s+(.+):([^:]*)$"
+            "^\\s*(\\d+)\\s+(.+?)\\\\?:([^:]*)$"
         );
         
         public final String exeName;
@@ -48,8 +48,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     private LineNumberReader getRawHelperOutput(String fileName) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder(this.helper.exeName, fileName);
         pb.redirectErrorStream(true);
-
         Process p = pb.start();
+        // ATTENTION: don't do p.waitFor() - it'd block forever if helper produces more output than the output stream's buffer can hold at once...
         LineNumberReader stdoutReader = new LineNumberReader(new InputStreamReader(p.getInputStream()));
         return stdoutReader;
     }
@@ -126,13 +126,12 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             int streamLength;
             Matcher m = this.helper.outputLineMatcher;
             for (String line: matchingLines(stdoutReader)) {
-                System.out.println(">>" + line);
                 if ((fileNameIdx < 0) || fileName.equals(m.group(fileNameIdx))) {
                     streamName = m.group(streamNameIdx);
                     streamLength = Integer.parseInt(m.group(streamLengthIdx), 10);
                     AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
                     result.add(s);
-                    log.debug(s.getName() + ":" + s.length());
+                    log.debug(s);
                 }
             }
             stdoutReader.close();

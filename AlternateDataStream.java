@@ -86,7 +86,7 @@ public class AlternateDataStream {
     }
     
     public String toString() {
-        return ":" + this.length() + ":" + this.getName();
+        return "\t" + this.length() + "\t\"" + ":" + this.getName() + "\"";
     }
 
 }
