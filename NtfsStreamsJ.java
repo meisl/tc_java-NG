@@ -20,21 +20,23 @@ import static plugins.wdx.FieldValue.*;
 public class NtfsStreamsJ extends WDXPluginAdapter {
 
     public static final String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe";
-    public static final String lads_exe = "c:\\Programme\\totalcmd\\plugins\\NtfsStreamsJ\\lads.exe";
+    public static final String lads_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe";
 
     private Log log = LogFactory.getLog(NtfsStreamsJ.class);
 
     private final Matcher streamsOutMatcher = Pattern.compile("^\\s+:([^:]*):\\$DATA\\t(\\d+)$").matcher("");
-    private final Matcher ladsOutMatcher = Pattern.compile("^\\s(\\d+)\\s+(.+):([^:]*)$").matcher("");
+    private final Matcher ladsOutMatcher = Pattern.compile("^\\s*(\\d+)\\s+(.+):([^:]*)$").matcher("");
 
     public NtfsStreamsJ() {
         log.debug(NtfsStreamsJ.class.getName());
     }
 
     private LineNumberReader getRawHelperOutput(String helperExeName, String fileName) throws IOException, InterruptedException {
-        Process p = Runtime.getRuntime().exec(new String[]{helperExeName, fileName});
+        ProcessBuilder pb = new ProcessBuilder(helperExeName, fileName);
+        pb.redirectErrorStream(true);
+
+        Process p = pb.start();
         LineNumberReader stdoutReader = new LineNumberReader(new InputStreamReader(p.getInputStream()));
-        p.waitFor();
         return stdoutReader;
     }
     
@@ -81,29 +83,41 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         };
     }
     
-    public List<AlternateDataStream> getStreamsWithHelper(final String helperExeName, final String fileName) throws IOException, InterruptedException {
-        List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
+    public List<AlternateDataStream> getStreamsWithHelper(final String helperExeName, String fileName) throws IOException, InterruptedException {
+        File file = new File(fileName).getCanonicalFile();
+        fileName = file.getPath();
+        
         Matcher m;
-        int streamNameIdx, streamSizeIdx;
+        int streamNameIdx, streamLengthIdx, fileNameIdx;
+        LineNumberReader stdoutReader;
         if (helperExeName.equals(streams_exe)) {
                 m = this.streamsOutMatcher;
                 streamNameIdx = 1;
-                streamSizeIdx = 2;
-        /*
+                streamLengthIdx = 2;
+                fileNameIdx = -1;
+                stdoutReader = getRawHelperOutput(helperExeName, file.getPath());
         } else if (helperExeName.equals(lads_exe)) {
                 m = this.ladsOutMatcher;
-                streamNameIdx = 1;
-                streamSizeIdx = 3;
-        */
+                streamNameIdx = 3;
+                streamLengthIdx = 1;
+                fileNameIdx = 2;
+                stdoutReader = getRawHelperOutput(helperExeName, file.getParent());
         } else {
             throw new RuntimeException("NYI: " + helperExeName);
         }
+        List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
         try {
-            LineNumberReader stdoutReader = getRawHelperOutput(helperExeName, fileName);
+            String streamName;
+            int streamLength;
             for (String line: matchingLines(m, stdoutReader)) {
-                AlternateDataStream s = new AlternateDataStream(fileName, m.group(streamNameIdx), Integer.parseInt(m.group(streamSizeIdx), 10));
-                result.add(s);
-                log.debug(s.getName() + ":" + s.length());
+                System.out.println(">>" + line);
+                if ((fileNameIdx < 0) || fileName.equals(m.group(fileNameIdx))) {
+                    streamName = m.group(streamNameIdx);
+                    streamLength = Integer.parseInt(m.group(streamLengthIdx), 10);
+                    AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
+                    result.add(s);
+                    log.debug(s.getName() + ":" + s.length());
+                }
             }
             stdoutReader.close();
         } catch (Exception e) {
