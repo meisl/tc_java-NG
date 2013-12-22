@@ -173,22 +173,32 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     
     public List<AlternateDataStream> getStreamsWithHelper(final String helperExeName, final String fileName) throws IOException, InterruptedException {
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
+        Matcher m;
+        int streamNameIdx, streamSizeIdx;
         if (helperExeName.equals(streams_exe)) {
-            try {
-                LineNumberReader stdoutReader = getRawHelperOutput(helperExeName, fileName);
-                Matcher m = this.streamsOutMatcher;
-                for (String line: matchingLines(m, stdoutReader)) {
-                    AlternateDataStream s = new AlternateDataStream(fileName, m.group(1), Integer.parseInt(m.group(2), 10));
-                    result.add(s);
-                    log.debug(s.getName() + ":" + s.length());
-                }
-                stdoutReader.close();
-            } catch (Exception e) {
-                log.error(e);
-                throw e;
-            }
+                m = this.streamsOutMatcher;
+                streamNameIdx = 1;
+                streamSizeIdx = 2;
+        /*
+        } else if (helperExeName.equals(lads_exe)) {
+                m = this.ladsOutMatcher;
+                streamNameIdx = 1;
+                streamSizeIdx = 3;
+        */
         } else {
             throw new RuntimeException("NYI: " + helperExeName);
+        }
+        try {
+            LineNumberReader stdoutReader = getRawHelperOutput(helperExeName, fileName);
+            for (String line: matchingLines(m, stdoutReader)) {
+                AlternateDataStream s = new AlternateDataStream(fileName, m.group(streamNameIdx), Integer.parseInt(m.group(streamSizeIdx), 10));
+                result.add(s);
+                log.debug(s.getName() + ":" + s.length());
+            }
+            stdoutReader.close();
+        } catch (Exception e) {
+            log.error(e);
+            throw e;
         }
         return result;
     }
