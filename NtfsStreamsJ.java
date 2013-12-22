@@ -40,6 +40,10 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     private Log log = LogFactory.getLog(NtfsStreamsJ.class);
     private final Helper helper;
     
+    public NtfsStreamsJ() {
+        this(Helper.LADS);
+    }
+    
     public NtfsStreamsJ(Helper helper) {
         log.debug(NtfsStreamsJ.class.getName() + "(" + helper + ")");
         this.helper = helper;
