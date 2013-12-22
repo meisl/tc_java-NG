@@ -19,20 +19,34 @@ import static plugins.wdx.FieldValue.*;
  */
 public class NtfsStreamsJ extends WDXPluginAdapter {
 
-    public static final String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe";
-    public static final String lads_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe";
-
-    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
-
-    private final Matcher streamsOutMatcher = Pattern.compile("^\\s+:([^:]*):\\$DATA\\t(\\d+)$").matcher("");
-    private final Matcher ladsOutMatcher = Pattern.compile("^\\s*(\\d+)\\s+(.+):([^:]*)$").matcher("");
-
-    public NtfsStreamsJ() {
-        log.debug(NtfsStreamsJ.class.getName());
+    public static enum Helper {
+        STREAMS(
+            "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe",
+            "^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
+        ),
+        LADS(
+            "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe",
+            "^\\s*(\\d+)\\s+(.+):([^:]*)$"
+        );
+        
+        public final String exeName;
+        public final Matcher outputLineMatcher;
+        Helper(String exeName, String pattern) {
+            this.exeName = exeName;
+            this.outputLineMatcher = Pattern.compile(pattern).matcher("");
+        }
     }
 
-    private LineNumberReader getRawHelperOutput(String helperExeName, String fileName) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(helperExeName, fileName);
+    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
+    private final Helper helper;
+    
+    public NtfsStreamsJ(Helper helper) {
+        log.debug(NtfsStreamsJ.class.getName() + "(" + helper + ")");
+        this.helper = helper;
+    }
+
+    private LineNumberReader getRawHelperOutput(String fileName) throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(this.helper.exeName, fileName);
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
@@ -40,7 +54,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         return stdoutReader;
     }
     
-    private Iterable<String> matchingLines(final Matcher m, final LineNumberReader r) {
+    private Iterable<String> matchingLines(final LineNumberReader r) {
+        final Matcher m = this.helper.outputLineMatcher;
         return new Iterable<String>() {
             private boolean canGetIterator = true;
             private String nextLine = null;
@@ -83,33 +98,34 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         };
     }
     
-    public List<AlternateDataStream> getStreamsWithHelper(final String helperExeName, String fileName) throws IOException, InterruptedException {
+    public List<AlternateDataStream> getStreamsWithHelper(String fileName) throws IOException, InterruptedException {
         File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         
-        Matcher m;
         int streamNameIdx, streamLengthIdx, fileNameIdx;
         LineNumberReader stdoutReader;
-        if (helperExeName.equals(streams_exe)) {
-                m = this.streamsOutMatcher;
+        switch (this.helper) {
+            case STREAMS:
                 streamNameIdx = 1;
                 streamLengthIdx = 2;
                 fileNameIdx = -1;
-                stdoutReader = getRawHelperOutput(helperExeName, file.getPath());
-        } else if (helperExeName.equals(lads_exe)) {
-                m = this.ladsOutMatcher;
+                stdoutReader = getRawHelperOutput(file.getPath());
+                break;
+            case LADS:
                 streamNameIdx = 3;
                 streamLengthIdx = 1;
                 fileNameIdx = 2;
-                stdoutReader = getRawHelperOutput(helperExeName, file.getParent());
-        } else {
-            throw new RuntimeException("NYI: " + helperExeName);
+                stdoutReader = getRawHelperOutput(file.getParent());
+                break;
+            default:
+                throw new RuntimeException("NYI: " + this.helper);
         }
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
         try {
             String streamName;
             int streamLength;
-            for (String line: matchingLines(m, stdoutReader)) {
+            Matcher m = this.helper.outputLineMatcher;
+            for (String line: matchingLines(stdoutReader)) {
                 System.out.println(">>" + line);
                 if ((fileNameIdx < 0) || fileName.equals(m.group(fileNameIdx))) {
                     streamName = m.group(streamNameIdx);
@@ -149,7 +165,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         {
         log.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...)");
         try {
-            List<AlternateDataStream> streams = getStreamsWithHelper(streams_exe, fileName);
+            List<AlternateDataStream> streams = getStreamsWithHelper(fileName);
             switch (fieldIndex) {
                 case 0:
                     fieldValue.setValue(FT_NUMERIC_32, streams.size());
