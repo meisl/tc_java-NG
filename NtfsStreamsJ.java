@@ -98,7 +98,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         };
     }
     
-    public List<AlternateDataStream> getStreamsWithHelper(String fileName) throws IOException, InterruptedException {
+    public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
         File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         
@@ -165,7 +165,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         {
         log.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...)");
         try {
-            List<AlternateDataStream> streams = getStreamsWithHelper(fileName);
+            List<AlternateDataStream> streams = getStreams(fileName);
             switch (fieldIndex) {
                 case 0:
                     fieldValue.setValue(FT_NUMERIC_32, streams.size());
