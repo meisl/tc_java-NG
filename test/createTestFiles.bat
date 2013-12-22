@@ -45,3 +45,6 @@ REM \u0020 SPACE
 del Zone.Identifier.tst 2>NUL
 echo [ZoneTransfer]>>"Zone.Identifier.tst:Zone.Identifier"
 echo ZoneId=3 >>"Zone.Identifier.tst:Zone.Identifier"
+
+mkdir foldersCanHaveStreamsToo 2>NUL
+echo bar >"foldersCanHaveStreamsToo:foo"
