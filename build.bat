@@ -10,7 +10,10 @@ IF ERRORLEVEL 1 (
 
 %JAVA_HOME%\bin\jar cf NtfsStreamsJ.jar *.class
 IF x%1==xtest (
-  java -cp tc-apis-1.7.jar;NtfsStreamsJ.jar;%COMMANDER_PATH%\javalib\commons-logging-api-1.0.4.jar Main "%2"
+  cd test
+  createTestFiles.bat
+  cd ..
+  %JAVA_HOME%\bin\java -cp tc-apis-1.7.jar;NtfsStreamsJ.jar;%COMMANDER_PATH%\javalib\commons-logging-api-1.0.4.jar Main %2 %3 %4 %5 %6 %7 %8 %9
 )
 
 :DONE
