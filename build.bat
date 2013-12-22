@@ -5,6 +5,12 @@ del *.class 2>NUL
 %JAVA_HOME%\bin\javac -classpath tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar *.java
 IF ERRORLEVEL 1 (
   del NtfsStreamsJ.jar 2>NUL
-) ELSE (
-  %JAVA_HOME%\bin\jar cvf NtfsStreamsJ.jar *.class
+  GOTO DONE
 )
+
+%JAVA_HOME%\bin\jar cf NtfsStreamsJ.jar *.class
+IF x%1==xtest (
+  java -cp tc-apis-1.7.jar;NtfsStreamsJ.jar;%COMMANDER_PATH%\javalib\commons-logging-api-1.0.4.jar Main "%2"
+)
+
+:DONE

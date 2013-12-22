@@ -19,10 +19,10 @@ import static plugins.wdx.FieldValue.*;
  */
 public class NtfsStreamsJ extends WDXPluginAdapter {
 
-    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
+    public static final String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe";
+    public static final String lads_exe = "c:\\Programme\\totalcmd\\plugins\\NtfsStreamsJ\\lads.exe";
 
-    private String streams_exe = "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe";
-    private String lads_exe = "c:\\Programme\\totalcmd\\plugins\\NtfsStreamsJ\\lads.exe";
+    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
 
     private final Matcher streamsOutMatcher = Pattern.compile("^\\s+:([^:]*):\\$DATA\\t(\\d+)$").matcher("");
     private final Matcher ladsOutMatcher = Pattern.compile("^\\s(\\d+)\\s+(.+):([^:]*)$").matcher("");
