@@ -65,38 +65,22 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             public Iterator<MatchResult> iterator() {
                 if (canGetIterator) {
                     canGetIterator = false;
-                    return new Iterator<MatchResult>() {
-                        private MatchResult nextOut = null;
-                        private boolean nextValid = false;
-                        public boolean hasNext() {
+                    return new SeqIteratorAdapter<MatchResult>() {
+
+                        protected MatchResult seekNext() {
                             try {
-                                if (!nextValid) {
-                                    nextValid = true;
-                                    String nextLine;
-                                    while ((nextLine = r.readLine()) != null) {
-                                        m.reset(nextLine);
-                                        if (m.matches()) {
-                                            nextOut = m.toMatchResult();
-                                            return true;
-                                        }
+                                String nextLine;
+                                while ((nextLine = r.readLine()) != null) {
+                                    m.reset(nextLine);
+                                    if (m.matches()) {
+                                        return m.toMatchResult();
                                     }
-                                    nextOut = null;
                                 }
-                                return nextOut != null;
+                                return null;
                             } catch (IOException e) {
                                 log.error(e);
                                 throw new RuntimeException(e);
                             }
-                        }
-                        public MatchResult next() {
-                            if (!hasNext()) {
-                                throw new NoSuchElementException();
-                            }
-                            nextValid = false;
-                            return nextOut;
-                        }
-                        public void remove() {
-                            throw new UnsupportedOperationException();
                         }
                     };
                 } else {
