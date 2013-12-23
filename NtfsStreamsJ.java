@@ -22,7 +22,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     public static enum Helper {
         STREAMS(
             "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe",
-            "^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
+            //"^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
+            "^\\s+:([^:]*):\\$DATA\\t(\\d+)|(([a-zA-z]:\\\\)?([^:?*]+\\\\)*([^:?*\\\\]+)):$"
         ),
         LADS(
             "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe",
@@ -41,7 +42,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     private final Helper helper;
     
     public NtfsStreamsJ() {
-        this(Helper.LADS);
+        this(Helper.STREAMS);
     }
     
     public NtfsStreamsJ(Helper helper) {
@@ -66,9 +67,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                     canGetIterator = false;
                     return new Iterator<MatchResult>() {
                         private MatchResult nextOut = null;
+                        private boolean nextValid = false;
                         public boolean hasNext() {
                             try {
-                                if (nextOut == null) {
+                                if (!nextValid) {
+                                    nextValid = true;
                                     String nextLine;
                                     while ((nextLine = r.readLine()) != null) {
                                         m.reset(nextLine);
@@ -77,21 +80,20 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                                             return true;
                                         }
                                     }
-                                    return false;
+                                    nextOut = null;
                                 }
-                                return true;
+                                return nextOut != null;
                             } catch (IOException e) {
                                 log.error(e);
                                 throw new RuntimeException(e);
                             }
                         }
                         public MatchResult next() {
-                            if (hasNext()) {
-                                MatchResult out = nextOut;
-                                nextOut = null;
-                                return out;
+                            if (!hasNext()) {
+                                throw new NoSuchElementException();
                             }
-                            throw new NoSuchElementException();
+                            nextValid = false;
+                            return nextOut;
                         }
                         public void remove() {
                             throw new UnsupportedOperationException();
@@ -104,40 +106,191 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         };
     }
     
+    private static abstract class StreamListDesc implements Iterator<MatchResult> {
+        public final String fileName;
+        public final File file;
+        
+        private MatchResult nextOut;
+        private boolean nextValid;
+        
+        public StreamListDesc(String fileName, MatchResult firstResult, boolean firstValid) {
+            this.fileName = fileName;
+            this.file = new File(fileName);
+            this.nextOut = firstResult;
+            this.nextValid = firstValid;
+        }
+        
+        protected abstract MatchResult seekNext();
+
+        public boolean hasNext() {
+            if (!nextValid) {
+                nextValid = true;
+                nextOut = seekNext();
+            }
+            return nextOut != null;
+        }
+        
+        public MatchResult next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            nextValid = false;
+            return nextOut;
+        }
+        
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    public static abstract class Func1<TArg0, TResult> {
+        public abstract TResult apply(TArg0 arg0);
+    }
+    
+    public static abstract class Func2<TArg0, TArg1, TResult> extends Func1<TArg0, Func1<TArg1, TResult>> {
+        public final Func1<TArg1, TResult> apply(final TArg0 arg0) {
+            return new Func1<TArg1, TResult>() {
+                public final TResult apply(final TArg1 arg1) {
+                    return apply(arg0, arg1);
+                }
+            };
+        }
+        public abstract TResult apply(TArg0 arg0, TArg1 arg1);
+    }
+    
+    public <TKey> Iterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
+        return new Iterator<StreamListDesc>() {
+            private StreamListDesc nextOut = null;
+            private TKey lastKey = null;
+            private MatchResult pendingMatch = null;
+            public boolean hasNext() {
+                if (nextOut != null) {
+                    return true;
+                }
+                MatchResult match = pendingMatch;
+                if (match == null) {
+                    if (rawMatchesIt.hasNext()) {
+                        match = rawMatchesIt.next();
+                    }
+                } else {
+                    pendingMatch = null;
+                }
+                while (match != null) {
+                    TKey key = keyOf.apply(match, lastKey);
+                    if (key.equals(lastKey)) {
+                        // TODO append match to last StreamListDesc
+                    } else {
+                        lastKey = key;
+                        nextOut = new StreamListDesc((String)key, match, true) {
+                            protected MatchResult seekNext() {
+                                if (!rawMatchesIt.hasNext()) { 
+                                    return null;
+                                }
+                                MatchResult match = rawMatchesIt.next();
+                                TKey key = keyOf.apply(match, (TKey)this.fileName);
+                                if (((String)key).equals(this.fileName)) {
+                                    return match;
+                                }
+                                pendingMatch = match;
+                                return null;
+                            }
+                        };
+                        return true;
+                    }
+                    if (rawMatchesIt.hasNext()) {
+                        match = rawMatchesIt.next();
+                    }
+                }
+                nextOut = null;
+                return false;
+            }
+            public StreamListDesc next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                StreamListDesc out = nextOut;
+                nextOut = null;
+                return out;
+            }
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+    
     public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
         File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         
-        int streamNameIdx, streamLengthIdx, fileNameIdx;
+        final int streamNameIdx, streamLengthIdx, fileNameIdx;
         LineNumberReader stdoutReader;
+        Iterator<StreamListDesc> lists;
         switch (this.helper) {
             case STREAMS:
                 streamNameIdx = 1;
                 streamLengthIdx = 2;
-                fileNameIdx = -1;
+                fileNameIdx = 3;
                 stdoutReader = getRawHelperOutput(file.getPath());
-                break;
+                
+                lists = groupBy(
+                    matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator(), 
+                    new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
+                        String fileName = m.group(fileNameIdx);
+                        return fileName != null ? fileName : lastKey;
+                    } }
+                );
+                while (lists.hasNext()) {
+                    StreamListDesc list = lists.next();
+                    //if (list.file.equals(file)) {
+                        System.out.println(list.fileName);
+                        while (list.hasNext()) {
+                            System.out.println("   " + list.next().group(0));
+                        }
+                    //}
+                }
+                return null;
+                
+                //break;
             case LADS:
                 streamNameIdx = 3;
                 streamLengthIdx = 1;
                 fileNameIdx = 2;
                 stdoutReader = getRawHelperOutput(file.getParent());
-                break;
+                
+                lists = groupBy(
+                    matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator(), 
+                    new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) { return m.group(fileNameIdx); } }
+                );
+                while (lists.hasNext()) {
+                    StreamListDesc list = lists.next();
+                    //if (list.file.equals(file)) {
+                        System.out.println(list.fileName);
+                        while (list.hasNext()) {
+                            System.out.println("   " + list.next().group(0));
+                        }
+                    //}
+                }
+                return null;
+                //break;
             default:
                 throw new RuntimeException("NYI: " + this.helper);
         }
+        /*
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
         try {
             String streamName;
             int streamLength;
-            for (MatchResult match: matchingLines(stdoutReader, this.helper.outputLineMatcher)) {
-                if ((fileNameIdx < 0) || file.equals(new File(match.group(fileNameIdx)))) {
+            Iterator<MatchResult> it = matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator();
+            while (it.hasNext()) {
+                MatchResult match = it.next();
                     streamName = match.group(streamNameIdx);
-                    streamLength = Integer.parseInt(match.group(streamLengthIdx), 10);
-                    AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
-                    result.add(s);
-                    log.debug(s);
-                }
+                    System.out.println(match.group(fileNameIdx));
+                    if (match.group(fileNameIdx) == null) {
+                        streamLength = Integer.parseInt(match.group(streamLengthIdx), 10);
+                        AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
+                        result.add(s);
+                        log.debug(s);
+                    }
             }
             stdoutReader.close();
         } catch (Exception e) {
@@ -145,6 +298,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             throw e;
         }
         return result;
+        */
     }
 
     public int contentGetSupportedField(int fieldIndex,
