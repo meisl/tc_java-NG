@@ -17,3 +17,4 @@ IF x%1==xtest (
 )
 
 :DONE
+del *.class 2>NUL

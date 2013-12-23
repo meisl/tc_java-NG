@@ -142,22 +142,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             throw new UnsupportedOperationException();
         }
     }
-    
-    public static abstract class Func1<TArg0, TResult> {
-        public abstract TResult apply(TArg0 arg0);
-    }
-    
-    public static abstract class Func2<TArg0, TArg1, TResult> extends Func1<TArg0, Func1<TArg1, TResult>> {
-        public final Func1<TArg1, TResult> apply(final TArg0 arg0) {
-            return new Func1<TArg1, TResult>() {
-                public final TResult apply(final TArg1 arg1) {
-                    return apply(arg0, arg1);
-                }
-            };
-        }
-        public abstract TResult apply(TArg0 arg0, TArg1 arg1);
-    }
-    
+
     public <TKey> Iterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
         return new Iterator<StreamListDesc>() {
             private StreamListDesc nextOut = null;
