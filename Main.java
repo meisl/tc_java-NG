@@ -6,7 +6,7 @@ public class Main {
     
     
     public static void main(String... args) throws IOException, InterruptedException {
-        NtfsStreamsJ plugin = new NtfsStreamsJ(NtfsStreamsJ.Helper.LADS);
+        NtfsStreamsJ plugin = new NtfsStreamsJ();
         for (String arg: args) {
             System.out.println();
             System.out.println(arg);

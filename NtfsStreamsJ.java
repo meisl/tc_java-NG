@@ -65,6 +65,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             private String nextLine = null;
             public Iterator<String> iterator() {
                 if (canGetIterator) {
+                    canGetIterator = false;
                     return new Iterator<String>() {
                         public boolean hasNext() {
                             try {
@@ -130,7 +131,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             int streamLength;
             Matcher m = this.helper.outputLineMatcher;
             for (String line: matchingLines(stdoutReader)) {
-                if ((fileNameIdx < 0) || fileName.equals(m.group(fileNameIdx))) {
+                if ((fileNameIdx < 0) || file.equals(new File(m.group(fileNameIdx)))) {
                     streamName = m.group(streamNameIdx);
                     streamLength = Integer.parseInt(m.group(streamLengthIdx), 10);
                     AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
@@ -153,8 +154,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         {
         switch (fieldIndex) {
             case 0:
-                fieldName.append("streamCount");
+                fieldName.append("count");
                 return FT_NUMERIC_32;
+            case 1:
+                fieldName.append("summary");
+                return FT_STRING;
         }
         return FT_NOMOREFIELDS;
     }
@@ -172,7 +176,21 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             switch (fieldIndex) {
                 case 0:
                     fieldValue.setValue(FT_NUMERIC_32, streams.size());
+                    log.debug("count=" + streams.size());
                     return FT_NUMERIC_32;
+                case 1:
+                    int n = streams.size();
+                    if (n == 0) {
+                        fieldValue.setValue(FT_STRING, "");
+                    } else {
+                        StringBuilder result = new StringBuilder(n + " ADSs:");
+                        for (AlternateDataStream ads: streams) {
+                            result.append(System.lineSeparator()).append(ads);
+                        }
+                        result.append(System.lineSeparator());
+                        fieldValue.setValue(FT_STRING, result.toString());
+                }
+                return FT_STRING;
             }
         } catch (IOException e) {
             log.error(e);
