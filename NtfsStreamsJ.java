@@ -65,8 +65,44 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             public Iterator<MatchResult> iterator() {
                 if (canGetIterator) {
                     canGetIterator = false;
+                    final SeqIterator<String> lines = new SeqIteratorAdapter<String>() {
+                        protected String seekNext() {
+                            try {
+                                String line = r.readLine();
+                                return (line != null) ? line : endOfSeq();
+                            } catch (IOException e) {
+                                log.error(e);
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    };
                     return new SeqIteratorAdapter<MatchResult>() {
+                        protected MatchResult seekNext() {
+                            String nextLine;
+                            while (lines.hasNext()) {
+                                m.reset(lines.next());
+                                if (m.matches()) {
+                                    return m.toMatchResult();
+                                }
+                            }
+                            return endOfSeq();
+                        }
+                    };
+                    /*
+                    .map(new Func1<String, MatchResult>() {
+                        public MatchResult apply(String s) {
+                            m.reset(s);
+                            return m.toMatchResult();
+                        }
+                    }).filter(new Func1<MatchResult, Boolean>() {
+                        public Boolean apply(MatchResult m) {
+                            return m.group(0) != null;
+                        }
+                    });
+                    */
 
+/*
+                    return new SeqIteratorAdapter<MatchResult>() {
                         protected MatchResult seekNext() {
                             try {
                                 String nextLine;
@@ -82,7 +118,9 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                                 throw new RuntimeException(e);
                             }
                         }
+
                     };
+*/
                 } else {
                     throw new IllegalStateException("can iterate only once");
                 }
