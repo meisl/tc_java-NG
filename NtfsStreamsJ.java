@@ -58,37 +58,38 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         return stdoutReader;
     }
     
-    private Iterable<String> matchingLines(final LineNumberReader r) {
-        final Matcher m = this.helper.outputLineMatcher;
-        return new Iterable<String>() {
+    private Iterable<MatchResult> matchingLines(final LineNumberReader r, final Matcher m) {
+        return new Iterable<MatchResult>() {
             private boolean canGetIterator = true;
-            private String nextLine = null;
-            public Iterator<String> iterator() {
+            public Iterator<MatchResult> iterator() {
                 if (canGetIterator) {
                     canGetIterator = false;
-                    return new Iterator<String>() {
+                    return new Iterator<MatchResult>() {
+                        private MatchResult nextOut = null;
                         public boolean hasNext() {
                             try {
-                                if (nextLine == null) {
+                                if (nextOut == null) {
+                                    String nextLine;
                                     while ((nextLine = r.readLine()) != null) {
                                         m.reset(nextLine);
                                         if (m.matches()) {
+                                            nextOut = m.toMatchResult();
                                             return true;
                                         }
                                     }
-                                    nextLine = null;
+                                    return false;
                                 }
-                                return nextLine != null;
+                                return true;
                             } catch (IOException e) {
                                 log.error(e);
                                 throw new RuntimeException(e);
                             }
                         }
-                        public String next() {
+                        public MatchResult next() {
                             if (hasNext()) {
-                                String result = nextLine;
-                                nextLine = null;
-                                return result;
+                                MatchResult out = nextOut;
+                                nextOut = null;
+                                return out;
                             }
                             throw new NoSuchElementException();
                         }
@@ -129,11 +130,10 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         try {
             String streamName;
             int streamLength;
-            Matcher m = this.helper.outputLineMatcher;
-            for (String line: matchingLines(stdoutReader)) {
-                if ((fileNameIdx < 0) || file.equals(new File(m.group(fileNameIdx)))) {
-                    streamName = m.group(streamNameIdx);
-                    streamLength = Integer.parseInt(m.group(streamLengthIdx), 10);
+            for (MatchResult match: matchingLines(stdoutReader, this.helper.outputLineMatcher)) {
+                if ((fileNameIdx < 0) || file.equals(new File(match.group(fileNameIdx)))) {
+                    streamName = match.group(streamNameIdx);
+                    streamLength = Integer.parseInt(match.group(streamLengthIdx), 10);
                     AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
                     result.add(s);
                     log.debug(s);
