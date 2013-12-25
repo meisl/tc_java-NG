@@ -144,9 +144,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                             }
                         };
                     }
-                    if (rawMatchesIt.hasNext()) {
-                        match = rawMatchesIt.next();
-                    }
+                    match = rawMatchesIt.hasNext() ? rawMatchesIt.next() : null;
                 }
                 return endOfSeq();
             }
