@@ -9,6 +9,7 @@ IF ERRORLEVEL 1 (
 )
 
 %JAVA_HOME%\bin\jar cf NtfsStreamsJ.jar *.class
+del *.class 2>NUL
 IF x%1==xtest (
   cd test
   createTestFiles.bat
@@ -17,4 +18,3 @@ IF x%1==xtest (
 )
 
 :DONE
-del *.class 2>NUL
