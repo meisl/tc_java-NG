@@ -23,7 +23,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         STREAMS(
             "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe",
             //"^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
-            "^\\s+:([^:]*):\\$DATA\\t(\\d+)|(([a-zA-z]:\\\\)?([^:?*]+\\\\)*([^:?*\\\\]+)):$"
+            "^\\s+:([^:]*):\\$DATA\\t(\\d+)|(([a-zA-z]:\\\\)?([^:?*|<>/]+\\\\)*([^:?*|<>/\\\\]+)):$"
         ),
         LADS(
             "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe",
@@ -75,20 +75,20 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                             }
                         }
                     };
-                    return new SeqIteratorAdapter<MatchResult>() {
-
-                        protected MatchResult seekNext() {
-                            String nextLine;
-                            while (rawLines.hasNext()) {
-                                nextLine = rawLines.next();
-                                m.reset(nextLine);
-                                if (m.matches()) {
-                                    return m.toMatchResult();
-                                }
+                    final SeqIterator<MatchResult> matches = rawLines.map(new Func1<String, MatchResult>() {
+                        public MatchResult apply(String s) {
+                            if (m.reset(s).matches()) {
+                                return m.toMatchResult();
+                            } else {
+                                return null;
                             }
-                            return null;
                         }
-                    };
+                    }).filter(new Func1<MatchResult, Boolean>() {
+                        public Boolean apply(MatchResult match) {
+                            return match != null;
+                        }
+                    });
+                    return matches;
                 } else {
                     throw new IllegalStateException("can iterate only once");
                 }
