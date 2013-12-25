@@ -57,7 +57,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
     }
 */
 
-    public final SeqIterator<T> filter(final Func1<T, Boolean> predicate) {
+    public final SeqIterator<T> filter(final Func1<? super T, ? extends Boolean> predicate) {
         final SeqIterator<T> underlying = this;
         return new SeqIteratorAdapter<T>() {
             protected T seekNext() {
@@ -72,7 +72,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
         };
     }
 
-    public final <S> SeqIterator<S> map(final Func1<T, S> map) {
+    public final <S> SeqIterator<S> map(final Func1<? super T, ? extends S> map) {
         final SeqIterator<T> underlying = this;
         return new SeqIteratorAdapter<S>() {
             protected S seekNext() {
