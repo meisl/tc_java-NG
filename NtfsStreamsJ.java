@@ -155,52 +155,36 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 streamLengthIdx = 2;
                 fileNameIdx = 3;
                 matchingLines = this.helper.matchingLines(file.getPath());
-                System.out.println(matchingLines);
-
-                lists = groupBy(
-                    matchingLines,
-                    new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
-                        String fileName = m.group(fileNameIdx);
-                        return fileName != null ? fileName : lastKey;
-                    } }
-                ).toList();
-                for (StreamListDesc list: lists) {
-                    //if (list.file.equals(file)) {
-                        System.out.println(list.fileName + "   " + list);
-                        while (list.hasNext()) {
-                            System.out.println("   " + list.next().group(0));
-                        }
-                    //}
-                }
-                return null;
-                
-                //break;
+                break;
             case LADS:
                 streamNameIdx = 3;
                 streamLengthIdx = 1;
                 fileNameIdx = 2;
                 matchingLines = this.helper.matchingLines(file.getParent());
                 System.out.println(matchingLines);
-
-                lists = new Iterable<StreamListDesc>() { public Iterator<StreamListDesc> iterator() { return groupBy(
-                    matchingLines,
-                    new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) { return m.group(fileNameIdx); } }
-                );
-                } };
-
-                for (StreamListDesc list: lists) {
-                    //if (list.file.equals(file)) {
-                        System.out.println(list.fileName + "   " + list);
-                        while (list.hasNext()) {
-                            System.out.println("   " + list.next().group(0));
-                        }
-                    //}
-                }
-                return null;
-                //break;
+                break;
             default:
                 throw new RuntimeException("NYI: " + this.helper);
         }
+        System.out.println(matchingLines);
+
+        lists = groupBy(
+            matchingLines,
+            new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
+                String fileName = m.group(fileNameIdx);
+                return fileName != null ? fileName : lastKey;
+            } }
+        ).toList();
+        for (StreamListDesc list: lists) {
+            //if (list.file.equals(file)) {
+                System.out.println(list.fileName + "   " + list);
+                while (list.hasNext()) {
+                    System.out.println("   " + list.next().group(0));
+                }
+            //}
+        }
+        return null;
+
         /*
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
         try {
