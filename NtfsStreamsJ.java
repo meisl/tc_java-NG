@@ -103,14 +103,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     }
 
     public <TKey> Iterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
-        return new Iterator<StreamListDesc>() {
-            private StreamListDesc nextOut = null;
+        return new SeqIteratorAdapter<StreamListDesc>() {
             private TKey lastKey = null;
             private MatchResult pendingMatch = null;
-            public boolean hasNext() {
-                if (nextOut != null) {
-                    return true;
-                }
+
+            public StreamListDesc seekNext() {
                 MatchResult match = pendingMatch;
                 if (match == null) {
                     if (rawMatchesIt.hasNext()) {
@@ -122,10 +119,10 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 while (match != null) {
                     TKey key = keyOf.apply(match, lastKey);
                     if (key.equals(lastKey)) {
-                        // TODO append match to last StreamListDesc
+                        // TODO append match to last StreamListDesc (previousOut)
                     } else {
                         lastKey = key;
-                        nextOut = new StreamListDesc((String)key, match, true) {
+                        return new StreamListDesc((String)key, match, true) {
                             protected MatchResult seekNext() {
                                 if (!rawMatchesIt.hasNext()) { 
                                     return endOfSeq();
@@ -139,25 +136,12 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                                 return endOfSeq();
                             }
                         };
-                        return true;
                     }
                     if (rawMatchesIt.hasNext()) {
                         match = rawMatchesIt.next();
                     }
                 }
-                nextOut = null;
-                return false;
-            }
-            public StreamListDesc next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
-                }
-                StreamListDesc out = nextOut;
-                nextOut = null;
-                return out;
-            }
-            public void remove() {
-                throw new UnsupportedOperationException();
+                return endOfSeq();
             }
         };
     }
