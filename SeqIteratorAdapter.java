@@ -1,6 +1,6 @@
 import java.util.*;
 
-public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
+public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumeration<T> {
 
     private T nextOut;
     private boolean nextValid = false;
@@ -34,6 +34,10 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
         return (nextValid = !endOfSeqCalled);
     }
 
+    public final boolean hasMoreElements() {
+        return hasNext();
+    }
+
     public final T next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -42,10 +46,13 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
         return nextOut;
     }
 
+    public final T nextElement() {
+        return next();
+    }
+    
     public void remove() {
         throw new UnsupportedOperationException();
     }
-
 /*
     public final <U> SeqIterator<U> wrap(Func1<SeqIterator<T>, U> fn) {
         final SeqIterator<T> underlying = this;
@@ -72,13 +79,16 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
         };
     }
 
-    public final <S> SeqIterator<S> map(final Func1<? super T, ? extends S> map) {
+    public final <U> SeqIterator<U> map(final Func1<? super T, ? extends U> map) {
         final SeqIterator<T> underlying = this;
-        return new SeqIteratorAdapter<S>() {
-            protected S seekNext() {
+        return new SeqIteratorAdapter<U>() {
+            protected U seekNext() {
                 return underlying.hasNext() ? map.apply(underlying.next()) : endOfSeq();
             }
         };
     }
 
+    public final List<T> toList() {
+        return Collections.list(this);
+    }
 }

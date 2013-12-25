@@ -102,7 +102,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         }
     }
 
-    public <TKey> Iterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
+    public <TKey> SeqIterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
         return new SeqIteratorAdapter<StreamListDesc>() {
             private TKey lastKey = null;
             private MatchResult pendingMatch = null;
