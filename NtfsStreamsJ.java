@@ -60,10 +60,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             };
         }
 
-        public SeqIterator<MatchResult> matchingLines(String fileName) throws IOException {
+        public SeqIterator<Tuple3<String,String,String>> matchingLines(String fileName) throws IOException {
             return rawOutput(fileName)
                 .map(Func.regexMatch(this.outputLinePattern))
                 .filter(Predicate.notNull())
+                .map(Func.toTuple3())
             ;
         }
         
@@ -81,7 +82,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         this.helper = helper;
     }
 
-    private static abstract class StreamListDesc extends SeqIteratorAdapter<MatchResult> {
+    private static abstract class StreamListDesc extends SeqIteratorAdapter<Tuple3<String,String,String>> {
         public final String fileName;
         public final File file;
 
@@ -91,15 +92,15 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         }
     }
 
-    public <TKey> SeqIterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
+    public <TKey> SeqIterator<StreamListDesc> groupBy(final Iterator<Tuple3<String,String,String>> rawMatchesIt, final Func2<Tuple3<String,String,String>, TKey, TKey> keyOf) {
         return new SeqIteratorAdapter<StreamListDesc>() {
             private TKey lastKey = null;
             private StreamListDesc lastOut = null;
-            private MatchResult pendingMatch = null;
+            private Tuple3<String,String,String> pendingMatch = null;
 
             public StreamListDesc seekNext() {
                 System.out.println(">>>seekNext");
-                MatchResult match = pendingMatch;
+                Tuple3<String,String,String> match = pendingMatch;
                 if (match == null) {
                     if (rawMatchesIt.hasNext()) {
                         match = rawMatchesIt.next();
@@ -113,19 +114,19 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                         previous.append(match);
                     } else {
                         lastKey = key;
-                        final MatchResult firstResult = (match.group(1) != null) ? match : null;
+                        final Tuple3<String,String,String> firstResult = (match.item1 != null) ? match : null;
                         return new StreamListDesc((String)key) {
-                            private MatchResult first = firstResult;
-                            protected MatchResult seekNext() {
+                            private Tuple3<String,String,String> first = firstResult;
+                            protected Tuple3<String,String,String> seekNext() {
                                 if (first != null) {
-                                    MatchResult out = first;
+                                    Tuple3<String,String,String> out = first;
                                     first = null;
                                     return out;
                                 }
                                 if (!rawMatchesIt.hasNext()) {
                                     return endOfSeq();
                                 }
-                                MatchResult match = rawMatchesIt.next();
+                                Tuple3<String,String,String> match = rawMatchesIt.next();
                                 TKey key = keyOf.apply(match, (TKey)this.fileName);
                                 if (((String)key).equals(this.fileName)) {
                                     return match;
@@ -147,7 +148,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         fileName = file.getPath();
         
         final int streamNameIdx, streamLengthIdx, fileNameIdx;
-        final Iterator<MatchResult> matchingLines;
+        final Iterator<Tuple3<String,String,String>> matchingLines;
         Iterable<StreamListDesc> lists;
         switch (this.helper) {
             case STREAMS:

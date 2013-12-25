@@ -10,6 +10,8 @@ public interface SeqIterator<T> extends Iterator<T>, Enumeration<T> {
 
     public SeqIterator<T> append(T oneMore) throws IllegalStateException;
 
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> section(Func2<? super T, ? super TKey, ? extends TKey> keyOf);
+
     public List<T> toList();
 
 }
