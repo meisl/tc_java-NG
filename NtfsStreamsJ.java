@@ -31,11 +31,51 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         );
         
         public final String exeName;
-        public final Matcher outputLineMatcher;
+        public final Pattern outputLinePattern;
         Helper(String exeName, String pattern) {
             this.exeName = exeName;
-            this.outputLineMatcher = Pattern.compile(pattern).matcher("");
+            this.outputLinePattern = Pattern.compile(pattern);
         }
+
+        public SeqIterator<String> rawOutput(String fileName) throws IOException {
+            ProcessBuilder pb = new ProcessBuilder(this.exeName, fileName);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            // ATTENTION: don't do p.waitFor() - it'd block forever if helper produces more output than the output stream's buffer can hold at once...
+            final LineNumberReader r = new LineNumberReader(new InputStreamReader(p.getInputStream()));
+            return new SeqIteratorAdapter<String>() {
+                protected String seekNext() {
+                    try {
+                        String line = r.readLine();
+                        if (line != null) {
+                            return line;
+                        }
+                        r.close();
+                        return endOfSeq();
+                    } catch (IOException e) {
+                        //log.error(e);     // TODO: log(IOException) in rawOutput iterator
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+        }
+
+        public SeqIterator<MatchResult> matchingLines(String fileName) throws IOException {
+            final Matcher m = this.outputLinePattern.matcher("");
+            return rawOutput(fileName)
+                .map(new Func1<String, MatchResult>() {
+                    public MatchResult apply(String s) {
+                        if (m.reset(s).matches()) {
+                            return m.toMatchResult();
+                        } else {
+                            return null;
+                        }
+                    }
+                })
+                .filter(Predicate.notNull())
+            ;
+        }
+        
     }
 
     private Log log = LogFactory.getLog(NtfsStreamsJ.class);
@@ -50,52 +90,6 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         this.helper = helper;
     }
 
-    private LineNumberReader getRawHelperOutput(String fileName) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(this.helper.exeName, fileName);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        // ATTENTION: don't do p.waitFor() - it'd block forever if helper produces more output than the output stream's buffer can hold at once...
-        LineNumberReader stdoutReader = new LineNumberReader(new InputStreamReader(p.getInputStream()));
-        return stdoutReader;
-    }
-    
-    private Iterable<MatchResult> matchingLines(final LineNumberReader r, final Matcher m) {
-        return new Iterable<MatchResult>() {
-            private boolean canGetIterator = true;
-            public Iterator<MatchResult> iterator() {
-                if (canGetIterator) {
-                    canGetIterator = false;
-                    final SeqIterator<String> rawLines = new SeqIteratorAdapter<String>() {
-                        protected String seekNext() {
-                            try {
-                                String line = r.readLine();
-                                if (line != null) {
-                                    return line;
-                                }
-                                return endOfSeq();
-                            } catch (IOException e) {
-                                log.error(e);
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    };
-                    final SeqIterator<MatchResult> matches = rawLines.map(new Func1<String, MatchResult>() {
-                        public MatchResult apply(String s) {
-                            if (m.reset(s).matches()) {
-                                return m.toMatchResult();
-                            } else {
-                                return null;
-                            }
-                        }
-                    }).filter(Predicate.notNull());
-                    return matches;
-                } else {
-                    throw new IllegalStateException("can iterate only once");
-                }
-            }
-        };
-    }
-    
     private static abstract class StreamListDesc extends SeqIteratorAdapter<MatchResult> {
         public final String fileName;
         public final File file;
@@ -109,6 +103,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     public <TKey> SeqIterator<StreamListDesc> groupBy(final Iterator<MatchResult> rawMatchesIt, final Func2<MatchResult, TKey, TKey> keyOf) {
         return new SeqIteratorAdapter<StreamListDesc>() {
             private TKey lastKey = null;
+            private StreamListDesc lastOut = null;
             private MatchResult pendingMatch = null;
 
             public StreamListDesc seekNext() {
@@ -136,7 +131,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                                     first = null;
                                     return out;
                                 }
-                                if (!rawMatchesIt.hasNext()) { 
+                                if (!rawMatchesIt.hasNext()) {
                                     return endOfSeq();
                                 }
                                 MatchResult match = rawMatchesIt.next();
@@ -163,45 +158,22 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         fileName = file.getPath();
         
         final int streamNameIdx, streamLengthIdx, fileNameIdx;
-        final LineNumberReader stdoutReader;
+        final Iterator<MatchResult> matchingLines;
         Iterable<StreamListDesc> lists;
         switch (this.helper) {
             case STREAMS:
                 streamNameIdx = 1;
                 streamLengthIdx = 2;
                 fileNameIdx = 3;
-                stdoutReader = getRawHelperOutput(file.getPath());
-                
-                final Iterator<MatchResult> matchingLines = matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator();
-                SeqIterator<MatchResult> x = new SeqIteratorAdapter<MatchResult>() {
-                    private String fileName;
-                    protected MatchResult seekNext() {
-                        if (!matchingLines.hasNext()) {
-                            return endOfSeq();
-                        }
-                        MatchResult match = matchingLines.next();
-                        String fileName = match.group(fileNameIdx);
-                        if (fileName != null) {
-                            this.fileName = fileName;
-                            return match.group(streamNameIdx) != null ? match : seekNext();
-                        }
-                        return match;
-                    }
-                
-                };
-                /*
-                while (x.hasNext()) {
-                    System.out.print(x.fileName + "\t");
-                    System.out.println("   " + x.next().group(0));
-                }
-                */
-                lists = new ArrayList(groupBy(
-                    matchingLines, 
+                matchingLines = this.helper.matchingLines(file.getPath());
+
+                lists = groupBy(
+                    matchingLines,
                     new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
                         String fileName = m.group(fileNameIdx);
                         return fileName != null ? fileName : lastKey;
                     } }
-                ).toList());
+                ).toList();
                 for (StreamListDesc list: lists) {
                     //if (list.file.equals(file)) {
                         System.out.println(list.fileName + "   " + list);
@@ -217,10 +189,10 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 streamNameIdx = 3;
                 streamLengthIdx = 1;
                 fileNameIdx = 2;
-                stdoutReader = getRawHelperOutput(file.getParent());
+                matchingLines = this.helper.matchingLines(file.getParent());
                 
                 lists = new Iterable<StreamListDesc>() { public Iterator<StreamListDesc> iterator() { return groupBy(
-                    matchingLines(stdoutReader, helper.outputLineMatcher).iterator(), 
+                    matchingLines,
                     new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) { return m.group(fileNameIdx); } }
                 );
                 } };
