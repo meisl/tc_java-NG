@@ -95,8 +95,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     private static abstract class StreamListDesc extends SeqIteratorAdapter<MatchResult> {
         public final String fileName;
         public final File file;
-        
-        public StreamListDesc(String fileName, MatchResult firstResult, boolean firstValid) {
+
+        public StreamListDesc(String fileName) {
             this.fileName = fileName;
             this.file = new File(fileName);
         }
@@ -122,8 +122,15 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                         // TODO append match to last StreamListDesc (previousOut)
                     } else {
                         lastKey = key;
-                        return new StreamListDesc((String)key, match, true) {
+                        final MatchResult firstResult = match;
+                        return new StreamListDesc((String)key) {
+                            private MatchResult first = firstResult;
                             protected MatchResult seekNext() {
+                                if (first != null) {
+                                    MatchResult out = first;
+                                    first = null;
+                                    return out;
+                                }
                                 if (!rawMatchesIt.hasNext()) { 
                                     return endOfSeq();
                                 }
