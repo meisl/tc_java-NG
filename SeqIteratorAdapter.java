@@ -3,7 +3,7 @@ import java.util.*;
 public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumeration<T> {
 
     public static final <T> SeqIterator<T> singleton(final T elem) {
-        return new SeqIteratorAdapter<T>() {
+        return new SeqIteratorAdapter<T>("singleton(" + elem + ")") {
             private boolean done = false;
             public T seekNext() {
                 if (done) return endOfSeq();
@@ -20,6 +20,20 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
     private SeqIterator<T> tail = null;
     
     protected T previous = null;
+
+    private String description;
+
+    public SeqIteratorAdapter() {
+        this.description = super.toString();
+    }
+
+    public SeqIteratorAdapter(String description) {
+        this.description = description;
+    }
+    
+    public final String toString() {
+        return (this.tail == null) ? description : description + "\n  .concat(" + this.tail + ")";
+    }
 
     protected final T endOfSeq() {
         if (endOfSeqCalled) {
@@ -89,7 +103,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
 */
     public SeqIterator<T> concat(final SeqIterator<? extends T> rest) {
         final SeqIterator<T> head = this;
-        return new SeqIteratorAdapter<T>() {
+        return new SeqIteratorAdapter<T>(head.toString() + "\n  .concat(" + rest.toString() + ")") {
             protected T seekNext() {
                 if (head.hasNext()) return head.next();
                 if (rest.hasNext()) return rest.next();
@@ -100,7 +114,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
 
     public final SeqIterator<T> filter(final Func1<? super T, ? extends Boolean> predicate) {
         final SeqIterator<T> underlying = this;
-        return new SeqIteratorAdapter<T>() {
+        return new SeqIteratorAdapter<T>(underlying + "\n  .filter(" + predicate + ")") {
             protected T seekNext() {
                 while (underlying.hasNext()) {
                     T item = underlying.next();
@@ -115,12 +129,17 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
 
     public final <U> SeqIterator<U> map(final Func1<? super T, ? extends U> map) {
         final SeqIterator<T> underlying = this;
-        return new SeqIteratorAdapter<U>() {
+        return new SeqIteratorAdapter<U>(underlying + "\n  .map(" + map + ")") {
             protected U seekNext() {
                 return underlying.hasNext() ? map.apply(underlying.next()) : endOfSeq();
             }
         };
     }
+
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> section(final Func2<? super T, ? super TKey, ? extends TKey> keyOf) {
+        return null;
+    }
+
 
     public final List<T> toList() {
         return Collections.list(this);
