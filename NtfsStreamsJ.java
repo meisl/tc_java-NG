@@ -122,7 +122,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                         previous.append(match);
                     } else {
                         lastKey = key;
-                        final MatchResult firstResult = match;
+                        final MatchResult firstResult = (match.group(1) != null) ? match : null;
                         return new StreamListDesc((String)key) {
                             private MatchResult first = firstResult;
                             protected MatchResult seekNext() {
