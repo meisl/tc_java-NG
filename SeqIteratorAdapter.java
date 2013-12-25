@@ -2,9 +2,24 @@ import java.util.*;
 
 public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumeration<T> {
 
+    public static final <T> SeqIterator<T> singleton(final T elem) {
+        return new SeqIteratorAdapter<T>() {
+            private boolean done = false;
+            public T seekNext() {
+                if (done) return endOfSeq();
+                done = true;
+                return elem;
+            }
+        };
+    }
+
     private T nextOut;
     private boolean nextValid = false;
     private boolean endOfSeqCalled = false;
+
+    private SeqIterator<T> tail = null;
+    
+    protected T previous = null;
 
     protected final T endOfSeq() {
         if (endOfSeqCalled) {
@@ -25,13 +40,22 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
 
     public boolean hasNext() {
         if (endOfSeqCalled) {
+            if (this.tail != null) {
+                if (nextValid) {
+                    return true;
+                }
+                if (this.tail.hasNext()) {
+                    nextOut = this.tail.next();
+                    return (nextValid = true);
+                }
+            }
             return false;
         }
         if (nextValid) {    // TODO: rename "nextValid" -> "gotOnePending"
             return true;
         }
         nextOut = seekNext();
-        return (nextValid = !endOfSeqCalled);
+        return (nextValid = !endOfSeqCalled) || hasNext(); // check tail if endOfSeqCalled
     }
 
     public final boolean hasMoreElements() {
@@ -43,7 +67,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
             throw new NoSuchElementException();
         }
         nextValid = false;    // TODO: rename "nextValid" -> "gotOnePending"
-        return nextOut;
+        return previous = nextOut;
     }
 
     public final T nextElement() {
@@ -63,6 +87,16 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 */
+    public SeqIterator<T> concat(final SeqIterator<? extends T> rest) {
+        final SeqIterator<T> head = this;
+        return new SeqIteratorAdapter<T>() {
+            protected T seekNext() {
+                if (head.hasNext()) return head.next();
+                if (rest.hasNext()) return rest.next();
+                return endOfSeq();
+            }
+        };
+    }
 
     public final SeqIterator<T> filter(final Func1<? super T, ? extends Boolean> predicate) {
         final SeqIterator<T> underlying = this;
@@ -90,5 +124,14 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
 
     public final List<T> toList() {
         return Collections.list(this);
+    }
+
+    public SeqIterator<T> append(T elem) {
+        if (endOfSeqCalled) {
+            throw new IllegalStateException("cannot append to exhausted SeqIterator");
+        }
+        SeqIterator<T> s = singleton(elem);
+        this.tail = (this.tail == null) ? s : this.tail.concat(s);
+        return this;
     }
 }

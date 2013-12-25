@@ -68,7 +68,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                     final SeqIterator<String> rawLines = new SeqIteratorAdapter<String>() {
                         protected String seekNext() {
                             try {
-                                return r.readLine();
+                                String line = r.readLine();
+                                if (line != null) {
+                                    return line;
+                                }
+                                return endOfSeq();
                             } catch (IOException e) {
                                 log.error(e);
                                 throw new RuntimeException(e);
@@ -108,6 +112,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             private MatchResult pendingMatch = null;
 
             public StreamListDesc seekNext() {
+                System.out.println(">>>seekNext");
                 MatchResult match = pendingMatch;
                 if (match == null) {
                     if (rawMatchesIt.hasNext()) {
@@ -119,7 +124,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 while (match != null) {
                     TKey key = keyOf.apply(match, lastKey);
                     if (key.equals(lastKey)) {
-                        // TODO append match to last StreamListDesc (previousOut)
+                        previous.append(match);
                     } else {
                         lastKey = key;
                         final MatchResult firstResult = match;
@@ -158,8 +163,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         fileName = file.getPath();
         
         final int streamNameIdx, streamLengthIdx, fileNameIdx;
-        LineNumberReader stdoutReader;
-        Iterator<StreamListDesc> lists;
+        final LineNumberReader stdoutReader;
+        Iterable<StreamListDesc> lists;
         switch (this.helper) {
             case STREAMS:
                 streamNameIdx = 1;
@@ -190,17 +195,16 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                     System.out.println("   " + x.next().group(0));
                 }
                 */
-                lists = groupBy(
+                lists = new ArrayList(groupBy(
                     matchingLines, 
                     new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
                         String fileName = m.group(fileNameIdx);
                         return fileName != null ? fileName : lastKey;
                     } }
-                );
-                while (lists.hasNext()) {
-                    StreamListDesc list = lists.next();
+                ).toList());
+                for (StreamListDesc list: lists) {
                     //if (list.file.equals(file)) {
-                        System.out.println(list.fileName);
+                        System.out.println(list.fileName + "   " + list);
                         while (list.hasNext()) {
                             System.out.println("   " + list.next().group(0));
                         }
@@ -215,14 +219,14 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 fileNameIdx = 2;
                 stdoutReader = getRawHelperOutput(file.getParent());
                 
-                lists = groupBy(
-                    matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator(), 
+                lists = new Iterable<StreamListDesc>() { public Iterator<StreamListDesc> iterator() { return groupBy(
+                    matchingLines(stdoutReader, helper.outputLineMatcher).iterator(), 
                     new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) { return m.group(fileNameIdx); } }
                 );
-                while (lists.hasNext()) {
-                    StreamListDesc list = lists.next();
+                } };
+                for (StreamListDesc list: lists) {
                     //if (list.file.equals(file)) {
-                        System.out.println(list.fileName);
+                        System.out.println(list.fileName);// + "   " + list.hasNext() + "   " + list.tail);
                         while (list.hasNext()) {
                             System.out.println("   " + list.next().group(0));
                         }
