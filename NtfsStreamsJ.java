@@ -167,14 +167,12 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 throw new RuntimeException("NYI: " + this.helper);
         }
         System.out.println(matchingLines);
-
-        lists = groupBy(
-            matchingLines,
-            new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
-                String fileName = m.group(fileNameIdx);
-                return fileName != null ? fileName : lastKey;
-            } }
-        ).toList();
+        Func2<MatchResult, String, String> groupingFn = new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
+            String fileName = m.group(fileNameIdx);
+            return fileName != null ? fileName : lastKey;
+        } };
+        
+        lists = groupBy(matchingLines, groupingFn).toList();
         for (StreamListDesc list: lists) {
             //if (list.file.equals(file)) {
                 System.out.println(list.fileName + "   " + list);
