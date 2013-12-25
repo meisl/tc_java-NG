@@ -43,7 +43,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             Process p = pb.start();
             // ATTENTION: don't do p.waitFor() - it'd block forever if helper produces more output than the output stream's buffer can hold at once...
             final LineNumberReader r = new LineNumberReader(new InputStreamReader(p.getInputStream()));
-            return new SeqIteratorAdapter<String>() {
+            return new SeqIteratorAdapter<String>("linesFrom(" + pb.command() + ")") {
                 protected String seekNext() {
                     try {
                         String line = r.readLine();
@@ -61,17 +61,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         }
 
         public SeqIterator<MatchResult> matchingLines(String fileName) throws IOException {
-            final Matcher m = this.outputLinePattern.matcher("");
             return rawOutput(fileName)
-                .map(new Func1<String, MatchResult>() {
-                    public MatchResult apply(String s) {
-                        if (m.reset(s).matches()) {
-                            return m.toMatchResult();
-                        } else {
-                            return null;
-                        }
-                    }
-                })
+                .map(Func.regexMatch(this.outputLinePattern))
                 .filter(Predicate.notNull())
             ;
         }
@@ -164,6 +155,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 streamLengthIdx = 2;
                 fileNameIdx = 3;
                 matchingLines = this.helper.matchingLines(file.getPath());
+                System.out.println(matchingLines);
 
                 lists = groupBy(
                     matchingLines,
@@ -188,15 +180,17 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 streamLengthIdx = 1;
                 fileNameIdx = 2;
                 matchingLines = this.helper.matchingLines(file.getParent());
-                
+                System.out.println(matchingLines);
+
                 lists = new Iterable<StreamListDesc>() { public Iterator<StreamListDesc> iterator() { return groupBy(
                     matchingLines,
                     new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) { return m.group(fileNameIdx); } }
                 );
                 } };
+
                 for (StreamListDesc list: lists) {
                     //if (list.file.equals(file)) {
-                        System.out.println(list.fileName);// + "   " + list.hasNext() + "   " + list.tail);
+                        System.out.println(list.fileName + "   " + list);
                         while (list.hasNext()) {
                             System.out.println("   " + list.next().group(0));
                         }
