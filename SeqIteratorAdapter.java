@@ -30,13 +30,8 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T> {
         if (nextValid) {    // TODO: rename "nextValid" -> "gotOnePending"
             return true;
         }
-        T next = seekNext();
-        if (endOfSeqCalled) {
-            nextValid = false;
-            return false;
-        }
-        this.nextOut = next;
-        return true;
+        nextOut = seekNext();
+        return (nextValid = !endOfSeqCalled);
     }
 
     public final T next() {
