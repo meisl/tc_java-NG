@@ -13,4 +13,16 @@ public abstract class Func {
             }
         };
     }
+    
+    public static final Func1<MatchResult, Tuple3<String, String, String>> toTuple3() {
+        return new Func1<MatchResult, Tuple3<String, String, String>>() {
+            public Tuple3 apply(MatchResult m) {
+                return new Tuple3(m.group(1), m.group(2), m.group(3));
+            }
+            public String toString() {
+                return "\\m.(<m.group(1), m.group(2), m.group(3)>)";
+            }
+        };
+        
+    }
 }

@@ -136,6 +136,11 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> section(final Func2<? super T, ? super TKey, ? extends TKey> keyOf) {
+        return null;
+    }
+
+
     public final List<T> toList() {
         return Collections.list(this);
     }
