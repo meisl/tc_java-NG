@@ -1,57 +1,40 @@
 
-public class Tuple3<T0, T1, T2> {
+public class Tuple3<T0, T1, T2> extends Tuple2<T0, T1> {
 
-    public static <T0, T1, T2> Func1<Tuple3<T0,T1,T2>, T0> fn_project0() {
-        return new Func1<Tuple3<T0,T1,T2>, T0>() {
-            public T0 apply(Tuple3<T0,T1,T2> t) {
-                return t.item0;
-            }
-        };
-    }
-
-    public static <T0, T1, T2> Func1<Tuple3<T0,T1,T2>, T1> fn_project1() {
-        return new Func1<Tuple3<T0,T1,T2>, T1>() {
-            public T1 apply(Tuple3<T0,T1,T2> t) {
-                return t.item1;
-            }
-        };
-    }
-
-    public static <T0, T1, T2> Func1<Tuple3<T0,T1,T2>, T2> fn_project2() {
-        return new Func1<Tuple3<T0,T1,T2>, T2>() {
-            public T2 apply(Tuple3<T0,T1,T2> t) {
+    public static <T2, TTuple extends Tuple3<?, ?, ? extends T2>> Fn1<TTuple, T2> fn_project2() {
+        return new Fn1<TTuple, T2>() {
+            public T2 apply(TTuple t) {
                 return t.item2;
             }
         };
     }
-    
-    private static <T> Func1<Tuple3<T,T,T>, T> getProjection(String paramName, int i) {
+
+    private static <T, TTuple extends Tuple3<? extends T, ? extends T, ? extends T>> Fn1<TTuple, T> getProjection(String paramName, int i) {
         switch (i) {
             case 0: return fn_project0();
             case 1: return fn_project1();
             case 2: return fn_project2();
         }
-        throw new IllegalArgumentException("parameter " + paramName + " out of bounds: " + i);
+        throwNoSuchItem(paramName, i);
+        return null;
     }
 
-    public static <T> Func1<Tuple3<T,T,T>, Tuple3<T,T,T>> fn_permute(int a, int b, int c) {
-        final Func1<Tuple3<T,T,T>, T> p0 = getProjection("a", a);
-        final Func1<Tuple3<T,T,T>, T> p1 = getProjection("b", b);
-        final Func1<Tuple3<T,T,T>, T> p2 = getProjection("c", c);
-        return new Func1<Tuple3<T,T,T>, Tuple3<T,T,T>>() {
+    public static <T> Fn1<Tuple3<T,T,T>, Tuple3<T,T,T>> fn_permute(final int a, final int b, final int c) {
+        final Fn1<Tuple3<T,T,T>, T> p0 = getProjection("a", a);
+        final Fn1<Tuple3<T,T,T>, T> p1 = getProjection("b", b);
+        final Fn1<Tuple3<T,T,T>, T> p2 = getProjection("c", c);
+        return new Fn1<Tuple3<T,T,T>, Tuple3<T,T,T>>() {
             public Tuple3<T,T,T> apply(Tuple3<T,T,T> in) {
-                return new Tuple3<>(p0.apply(in), p1.apply(in), p2.apply(in));
+                return Tuple.create(p0.apply(in), p1.apply(in), p2.apply(in));
             }
         };
     }
 
-    public final T0 item0;
-    public final T1 item1;
+
     public final T2 item2;
 
-    public Tuple3(T0 item0, T1 item1, T2 item2) {
-        this.item0 = item0;
-        this.item1 = item1;
+    protected Tuple3(T0 item0, T1 item1, T2 item2) {
+        super(item0, item1);
         this.item2 = item2;
     }
     

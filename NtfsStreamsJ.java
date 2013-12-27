@@ -34,7 +34,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         
         public final String exeName;
         public final Pattern outputLinePattern;
-        public final Func1<Tuple3<String,String,String>, Tuple3<String,String,String>> fn_permute;
+        public final Fn1<Tuple3<String,String,String>, Tuple3<String,String,String>> fn_permute;
 
         
         Helper(String exeName, String pattern, int fileNameIdx, int streamNameIdx, int streamSizeIdx) {
@@ -177,6 +177,12 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             return fileName != null ? fileName : lastKey;
         } };
         */
+        Tuple2<String, String> t = Tuple.create("a", "b");
+        Tuple1<String> t1 = t;
+        Fn1<Tuple2<String, ?>, String> proj0 = Tuple2.fn_project0();
+        Fn1<Tuple2<?, String>, String> proj1 = Tuple2.fn_project1();
+        System.out.println(proj0.apply(t));
+
         Func2<Tuple3<String, String, String>, String, String> groupingFn = new Func2<Tuple3<String, String, String>, String, String>() {
             public String apply(Tuple3<String, String, String> t, String lastKey) {
                 System.out.println(">>> " + t + ", " + lastKey);

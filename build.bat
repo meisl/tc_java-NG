@@ -2,7 +2,7 @@
 set JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
 set JAVALIB=%COMMANDER_PATH%\javalib
 del *.class 2>NUL
-%JAVA_HOME%\bin\javac -classpath tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar *.java
+%JAVA_HOME%\bin\javac -Xlint -classpath tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar *.java
 IF ERRORLEVEL 1 (
   del NtfsStreamsJ.jar 2>NUL
   GOTO DONE

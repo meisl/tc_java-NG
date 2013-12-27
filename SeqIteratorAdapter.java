@@ -112,7 +112,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 
-    public final SeqIterator<T> filter(final Func1<? super T, ? extends Boolean> predicate) {
+    public final SeqIterator<T> filter(final Fn1<? super T, ? extends Boolean> predicate) {
         final SeqIterator<T> underlying = this;
         return new SeqIteratorAdapter<T>(underlying + "\n  .filter(" + predicate + ")") {
             protected T seekNext() {
@@ -127,7 +127,7 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 
-    public final <U> SeqIterator<U> map(final Func1<? super T, ? extends U> map) {
+    public final <U> SeqIterator<U> map(final Fn1<? super T, ? extends U> map) {
         final SeqIterator<T> underlying = this;
         return new SeqIteratorAdapter<U>(underlying + "\n  .map(" + map + ")") {
             protected U seekNext() {
@@ -135,11 +135,6 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
             }
         };
     }
-
-    public <TKey> SeqIterator<SectionIterator<TKey, T>> section(final Func2<? super T, ? super TKey, ? extends TKey> keyOf) {
-        return null;
-    }
-
 
     public final List<T> toList() {
         return Collections.list(this);
