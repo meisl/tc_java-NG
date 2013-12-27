@@ -1,5 +1,5 @@
 
-public abstract class Predicate<TArg> extends Func1<TArg, Boolean> {
+public abstract class Predicate<TArg> extends Fn1<TArg, Boolean> {
 
     public static <T> Predicate<T> notNull() {
         return new Predicate<T>() {

@@ -2,11 +2,11 @@ import java.util.regex.*;
 
 public abstract class Func {
 
-    public static final <S, T, TResult> Func1<S, TResult> compose(
-        final Func1<? super T, ? extends TResult> outer,
-        final Func1<? super S, ? extends T> inner
+    public static final <S, T, TResult> Fn1<S, TResult> compose(
+        final Fn1<? super T, ? extends TResult> outer,
+        final Fn1<? super S, ? extends T> inner
     ) {
-        return new Func1<S, TResult>() {
+        return new Fn1<S, TResult>() {
             public TResult apply(S value) {
                 return outer.apply(inner.apply(value));
             }
@@ -16,9 +16,9 @@ public abstract class Func {
         };
     }
 
-    public static final Func1<String, MatchResult> regexMatch(final Pattern p) {
+    public static final Fn1<String, MatchResult> regexMatch(final Pattern p) {
         final Matcher m = p.matcher("");
-        return new Func1<String, MatchResult>() {
+        return new Fn1<String, MatchResult>() {
             public MatchResult apply(String s) {
                 return m.reset(s).matches() ? m.toMatchResult() : null;
             }
@@ -28,8 +28,8 @@ public abstract class Func {
         };
     }
     
-    public static final Func1<MatchResult, Tuple3<String, String, String>> toTuple3() {
-        return new Func1<MatchResult, Tuple3<String, String, String>>() {
+    public static final Fn1<MatchResult, Tuple3<String, String, String>> toTuple3() {
+        return new Fn1<MatchResult, Tuple3<String, String, String>>() {
             public Tuple3<String, String, String> apply(MatchResult m) {
                 return Tuple.create(m.group(1), m.group(2), m.group(3));
             }
@@ -39,8 +39,8 @@ public abstract class Func {
         };
     }
     
-    public static final <T> Func3<Boolean, T, T, T> ite() {
-        return new Func3<Boolean, T, T, T>() {
+    public static final <T> Fn3<Boolean, T, T, T> ite() {
+        return new Fn3<Boolean, T, T, T>() {
             public T apply(Boolean condition, T valThen, T valElse) {
                 return condition ? valThen : valElse;
             }
@@ -50,8 +50,8 @@ public abstract class Func {
         };
     }
     
-    public static final <T> Func2<T, T, T> elvis() {
-        return new Func2<T, T, T>() {
+    public static final <T> Fn2<T, T, T> elvis() {
+        return new Fn2<T, T, T>() {
             public T apply(T value, T alternative) {
                 return (value != null) ? value : alternative;
             }

@@ -101,7 +101,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
 
     public <TKey> SeqIterator<StreamListDesc> groupBy(
         final Iterator<Tuple3<String,String,String>> rawMatchesIt, 
-        final Func2<Tuple3<String,String,String>, TKey, TKey> keyOf
+        final Fn2<Tuple3<String,String,String>, TKey, TKey> keyOf
     ) {
         return new SeqIteratorAdapter<StreamListDesc>() {
             private TKey lastKey = null;
@@ -183,7 +183,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         Fn1<Tuple2<?, String>, String> proj1 = Tuple2.fn_project1();
         System.out.println(proj0.apply(t));
 
-        Func2<Tuple3<String, String, String>, String, String> groupingFn = new Func2<Tuple3<String, String, String>, String, String>() {
+        Fn2<Tuple3<String, String, String>, String, String> groupingFn = new Fn2<Tuple3<String, String, String>, String, String>() {
             public String apply(Tuple3<String, String, String> t, String lastKey) {
                 System.out.println(">>> " + t + ", " + lastKey);
                 String fileName = t.item0;  //(fileNameIdx == 3) ? t.group(fileNameIdx);
