@@ -114,21 +114,14 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                         previous.append(match);
                     } else {
                         lastKey = key;
-                        final Tuple3<String,String,String> firstResult = (match.item1 != null) ? match : null;
-                        return new SectionIteratorAdapter<TKey, Tuple3<String,String,String>>(key) {
-                            private Tuple3<String,String,String> first = firstResult;
-                            protected Tuple3<String,String,String> seekNext() {
-                                if (first != null) {
-                                    Tuple3<String,String,String> out = first;
-                                    first = null;
-                                    return out;
-                                }
+                        return new SectionIteratorAdapter<TKey, Tuple3<String,String,String>>(key, match, (match.item1 != null)) {
+                            protected Tuple3<String,String,String> seekNext(TKey currentKey) {
                                 if (!rawMatchesIt.hasNext()) {
                                     return endOfSeq();
                                 }
                                 Tuple3<String,String,String> match = rawMatchesIt.next();
-                                TKey key = keyOf.apply(match, this.key());
-                                if (key.equals(this.key())) {
+                                TKey key = keyOf.apply(match, currentKey);
+                                if (key.equals(currentKey)) {
                                     return match;
                                 }
                                 pendingMatch = match;
