@@ -112,6 +112,15 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 
+    public SeqIterator<T> append(T elem) {
+        if (endOfSeqCalled) {
+            throw new IllegalStateException("cannot append to exhausted SeqIterator");
+        }
+        SeqIterator<T> s = singleton(elem);
+        this.tail = (this.tail == null) ? s : this.tail.concat(s);
+        return this;
+    }
+
     public final SeqIterator<T> filter(final Fn1<? super T, ? extends Boolean> predicate) {
         final SeqIterator<T> underlying = this;
         return new SeqIteratorAdapter<T>(underlying + "\n  .filter(" + predicate + ")") {
@@ -136,16 +145,54 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         };
     }
 
-    public final List<T> toList() {
-        return Collections.list(this);
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> sectionBy(
+        final Fn2<? super T, ? super TKey, ? extends TKey> keyOf,
+        final Fn1<? super T, ? extends Boolean> filter
+    ) {
+        final SeqIterator<T> underlying = this;
+        return new SeqIteratorAdapter<SectionIterator<TKey, T>>() {
+            private TKey lastKey = null;
+            private T pendingElem = null; // <<<<
+
+            public SectionIterator<TKey, T> seekNext() {
+                System.out.println(">>>seekNext");
+                T elem = pendingElem; // <<<<
+                if (elem == null) {
+                    if (underlying.hasNext()) {
+                        elem = underlying.next();
+                    }
+                } else {
+                    pendingElem = null; // <<<<
+                }
+                while (elem != null) {
+                    TKey key = keyOf.apply(elem, lastKey);
+                    if (key.equals(lastKey)) {
+                        this.previous.append(elem);
+                    } else {
+                        lastKey = key;
+                        return new SectionIteratorAdapter<TKey, T>(key, elem, filter.apply(elem)) {  // <<<
+                            protected T seekNext(TKey currentKey) {
+                                if (!underlying.hasNext()) {
+                                    return endOfSeq();
+                                }
+                                T elem = underlying.next();
+                                TKey key = keyOf.apply(elem, currentKey);
+                                if (key.equals(currentKey)) {
+                                    return elem;
+                                }
+                                pendingElem = elem; // <<<
+                                return endOfSeq();
+                            }
+                        };
+                    }
+                    elem = underlying.hasNext() ? underlying.next() : null; // <<<<
+                }
+                return endOfSeq();
+            }
+        };
     }
 
-    public SeqIterator<T> append(T elem) {
-        if (endOfSeqCalled) {
-            throw new IllegalStateException("cannot append to exhausted SeqIterator");
-        }
-        SeqIterator<T> s = singleton(elem);
-        this.tail = (this.tail == null) ? s : this.tail.concat(s);
-        return this;
+    public final List<T> toList() {
+        return Collections.list(this);
     }
 }

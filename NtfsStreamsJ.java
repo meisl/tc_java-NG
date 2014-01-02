@@ -89,59 +89,12 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         this.helper = helper;
     }
 
-    public <TKey> SeqIterator<SectionIterator<TKey, Tuple3<String,String,String>>> groupBy(
-        final Iterator<Tuple3<String,String,String>> rawMatchesIt, 
-        final Fn2<Tuple3<String,String,String>, TKey, TKey> keyOf
-    ) {
-        return new SeqIteratorAdapter<SectionIterator<TKey, Tuple3<String,String,String>>>() {
-            private TKey lastKey = null;
-            private SectionIterator<TKey, Tuple3<String,String,String>> lastOut = null;
-            private Tuple3<String,String,String> pendingMatch = null;
-
-            public SectionIterator<TKey, Tuple3<String,String,String>> seekNext() {
-                System.out.println(">>>seekNext");
-                Tuple3<String,String,String> match = pendingMatch;
-                if (match == null) {
-                    if (rawMatchesIt.hasNext()) {
-                        match = rawMatchesIt.next();
-                    }
-                } else {
-                    pendingMatch = null;
-                }
-                while (match != null) {
-                    TKey key = keyOf.apply(match, lastKey);
-                    if (key.equals(lastKey)) {
-                        previous.append(match);
-                    } else {
-                        lastKey = key;
-                        return new SectionIteratorAdapter<TKey, Tuple3<String,String,String>>(key, match, (match.item1 != null)) {
-                            protected Tuple3<String,String,String> seekNext(TKey currentKey) {
-                                if (!rawMatchesIt.hasNext()) {
-                                    return endOfSeq();
-                                }
-                                Tuple3<String,String,String> match = rawMatchesIt.next();
-                                TKey key = keyOf.apply(match, currentKey);
-                                if (key.equals(currentKey)) {
-                                    return match;
-                                }
-                                pendingMatch = match;
-                                return endOfSeq();
-                            }
-                        };
-                    }
-                    match = rawMatchesIt.hasNext() ? rawMatchesIt.next() : null;
-                }
-                return endOfSeq();
-            }
-        };
-    }
-    
     public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
         File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         
         final int streamNameIdx, streamLengthIdx, fileNameIdx;
-        final Iterator<Tuple3<String, String, String>> matchingLines;
+        final SeqIterator<Tuple3<String, String, String>> matchingLines;
         Iterable<SectionIterator<String, Tuple3<String,String,String>>> lists;
         switch (this.helper) {
             case STREAMS:
@@ -174,7 +127,8 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             }
         };
         
-        lists = groupBy(matchingLines, groupingFn).toList();
+        //lists = groupBy(matchingLines, groupingFn, Predicate.notNull()).toList();
+        lists = matchingLines.sectionBy(groupingFn, Predicate.notNull()).toList();
         for (SectionIterator<String, Tuple3<String,String,String>> list: lists) {
             //if (list.file.equals(file)) {
                 System.out.println(list.key() + "   " + list);
