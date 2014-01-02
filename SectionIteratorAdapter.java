@@ -1,6 +1,6 @@
 import java.util.*;
 
-public abstract class SectionIteratorAdapter<TKey, TElem> implements SectionIterator<TKey, TElem> {
+public abstract class SectionIteratorAdapter<TKey, TElem> extends SeqIteratorAdapter<TElem> implements SectionIterator<TKey, TElem> {
 
     private final TKey key;
     
