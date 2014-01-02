@@ -11,9 +11,14 @@ public interface SeqIterator<T> extends Iterator<T>, Enumeration<T> {
     public <U> SeqIterator<U> map(Fn1<? super T, ? extends U> mapFn);
 
     public <TKey> SeqIterator<SectionIterator<TKey, T>> sectionBy(
+        final Fn2<? super T, ? super TKey, ? extends TKey> keyOf
+    );
+
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> sectionBy(
         final Fn2<? super T, ? super TKey, ? extends TKey> keyOf,
         final Fn1<? super T, ? extends Boolean> filter
     );
+
 
     public List<T> toList();
 

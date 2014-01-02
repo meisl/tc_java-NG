@@ -146,6 +146,12 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
     }
 
     public <TKey> SeqIterator<SectionIterator<TKey, T>> sectionBy(
+        final Fn2<? super T, ? super TKey, ? extends TKey> keyOf
+    ) {
+        return this.sectionBy(keyOf, Predicate.constTrue());
+    }
+
+    public <TKey> SeqIterator<SectionIterator<TKey, T>> sectionBy(
         final Fn2<? super T, ? super TKey, ? extends TKey> keyOf,
         final Fn1<? super T, ? extends Boolean> filter
     ) {
