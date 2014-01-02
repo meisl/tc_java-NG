@@ -129,8 +129,9 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         
         //lists = groupBy(matchingLines, groupingFn, Predicate.notNull()).toList();
         lists = matchingLines.sectionBy(
-            groupingFn
-            , Func.compose(Predicate.notNull(), Tuple3.fn_project1())
+            //groupingFn
+            Func.<String>elvis().compose(Tuple3.<String, Tuple3<String,String,String>>fn_project0())
+            , Predicate.notNull().compose(Tuple3.fn_project1())
         ).toList();
         for (SectionIterator<String, Tuple3<String,String,String>> list: lists) {
             //if (list.file.equals(file)) {

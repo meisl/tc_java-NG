@@ -2,20 +2,6 @@ import java.util.regex.*;
 
 public abstract class Func {
 
-    public static final <S, T, TResult> Fn1<S, TResult> compose(
-        final Fn1<? super T, ? extends TResult> outer,
-        final Fn1<? super S, ? extends T> inner
-    ) {
-        return new Fn1<S, TResult>() {
-            public TResult apply(S value) {
-                return outer.apply(inner.apply(value));
-            }
-            public String toString() {
-                return "\\v.( (" + outer + ") ((" + inner +  ") v) )";
-            }
-        };
-    }
-
     public static final Fn1<String, MatchResult> regexMatch(final Pattern p) {
         final Matcher m = p.matcher("");
         return new Fn1<String, MatchResult>() {

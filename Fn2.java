@@ -12,5 +12,16 @@ public abstract class Fn2<TArg0, TArg1, TResult> extends Fn1<TArg0, Fn1<? extend
         };
     }
 
+    public <S> Fn2<S, TArg1, TResult> compose(final Fn1<? super S, ? extends TArg0> inner) {
+        return new Fn2<S, TArg1, TResult>() {
+            public TResult apply(S arg0, TArg1 arg1) {
+                return Fn2.this.apply(inner.apply(arg0), arg1);
+            }
+            public String toString() {
+                return "\\v w.( (" + Fn2.this + ") ((" + inner +  ") v) w )";
+            }
+        };
+    }
+
     public abstract TResult apply(TArg0 arg0, TArg1 arg1);
 }
