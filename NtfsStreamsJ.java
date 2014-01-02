@@ -170,6 +170,21 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             default:
                 throw new RuntimeException("NYI: " + this.helper);
         }
+        
+        VarExpr<Integer> v1 = new VarExpr<>();
+        VarExpr<Integer> v2 = new VarExpr<>();
+        
+        Expr0<Boolean> cond = Predicate.notNull().toExpr1().bind1(v2);
+        System.out.println(cond);
+        System.out.println(
+            StmtExpr.If.create(
+            v1.declare(Integer.class)
+                .concat(v1.assign(5))
+                .concat(v1.assign(v2))
+                .concat(StmtExpr.Return.create(v1))
+            ).bind1(cond)
+        .toSrc());
+        
         System.out.println(matchingLines);
         /*
         Func2<MatchResult, String, String> groupingFn = new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {

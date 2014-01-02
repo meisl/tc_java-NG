@@ -9,9 +9,14 @@ public abstract class Fn3<TArg0, TArg1, TArg2, TResult> extends Fn1<TArg0, Fn2<?
             public String toString() {
                 return "\\b c.( (" + Fn3.this + ") " + arg0 + " b c )";
             }
-
+            //public Expr2<TArg1, TArg2, TResult> toExpr2() {
+            //    return Expr.fromFn(Fn3.this).bind1(new ConstExpr<>(arg0));
+            //}
         };
     }
 
+    //public abstract Expr3<TArg0, TArg1, TArg2, TResult> toExpr3();
+
     public abstract TResult apply(TArg0 arg0, TArg1 arg1, TArg2 arg2);
+
 }
