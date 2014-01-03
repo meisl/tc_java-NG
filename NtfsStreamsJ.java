@@ -90,12 +90,11 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     }
 
     public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
-        File file = new File(fileName).getCanonicalFile();
+        final File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         
-        final int streamNameIdx, streamLengthIdx, fileNameIdx;
         final SeqIterator<Tuple3<String, String, String>> matchingLines;
-        Iterable<SectionIterator<String, Tuple3<String,String,String>>> lists;
+        List<List<AlternateDataStream>> lists;
         switch (this.helper) {
             case STREAMS:
                 matchingLines = this.helper.matchingLines(file.getPath());
@@ -106,52 +105,47 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             default:
                 throw new RuntimeException("NYI: " + this.helper);
         }
-        //System.out.println(matchingLines);
 
-        Tuple2<String, String> t = Tuple.create("a", "b");
-        Tuple1<String> t1 = t;
-        Fn1<Tuple2<String, ?>, String> proj0 = Tuple2.fn_project0();
-        Fn1<Tuple2<?, String>, String> proj1 = Tuple2.fn_project1();
+        Fn1<Tuple3<String, ?, ?>, String> proj0 = Tuple3.fn_project0();
+        Fn1<Tuple3<?, String, ?>, String> proj1 = Tuple3.fn_project1();
+        Fn1<Tuple3<?, ?, String>, String> proj2 = Tuple3.fn_project2();
         //System.out.println(Tuple2.fn_project0().apply(t));
 
         lists = matchingLines.sectionBy(
-            Func.<String>elvis().compose(Tuple3.<String, Tuple3<String,String,String>>fn_project0())
-            , Predicate.notNull().compose(Tuple3.fn_project1())
-        ).toList();
-        for (SectionIterator<String, Tuple3<String,String,String>> list: lists) {
+            Func.<String>elvis().compose(proj0)
+            , Predicate.notNull().compose(proj1)
+        )
+        .filter(new Predicate<SectionIterator<String, ?>>() {
+            public Boolean apply(SectionIterator<String, ?> s) {
+                return new File(s.key()).equals(file);
+            }
+        })
+        .map(new Fn1<SectionIterator<String, Tuple3<String,String,String>>, List<AlternateDataStream>> () {
+            public List<AlternateDataStream> apply(SectionIterator<String, Tuple3<String,String,String>> section) {
+                List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
+                String streamName;
+                int streamLength;
+                while (section.hasNext()) {
+                    Tuple3<String, String, String> t = section.next();
+                    streamName = t.item1;
+                    streamLength = Integer.parseInt(t.item2, 10);
+                    AlternateDataStream s = new AlternateDataStream(section.key(), streamName, streamLength);
+                    result.add(s);
+                    log.debug(s);
+                }
+                return result;
+            }
+        })
+        .toList();
+        for (List<AlternateDataStream> list: lists) {
             //if (list.file.equals(file)) {
-                System.out.println("KEY: " + list.key());// + "   " + list);
-                while (list.hasNext()) {
-                    System.out.println("   " + list.next());
+                //System.out.println("KEY: " + list.key());// + "   " + list);
+                for (AlternateDataStream s: list) {
+                    System.out.println(s);
                 }
             //}
         }
-        return Collections.emptyList();
-
-        /*
-        List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
-        try {
-            String streamName;
-            int streamLength;
-            Iterator<MatchResult> it = matchingLines(stdoutReader, this.helper.outputLineMatcher).iterator();
-            while (it.hasNext()) {
-                MatchResult match = it.next();
-                    streamName = match.group(streamNameIdx);
-                    System.out.println(match.group(fileNameIdx));
-                    if (match.group(fileNameIdx) == null) {
-                        streamLength = Integer.parseInt(match.group(streamLengthIdx), 10);
-                        AlternateDataStream s = new AlternateDataStream(fileName, streamName, streamLength);
-                        result.add(s);
-                        log.debug(s);
-                    }
-            }
-            stdoutReader.close();
-        } catch (Exception e) {
-            log.error(e);
-            throw e;
-        }
-        return result;
-        */
+        return lists.size() > 0 ? lists.get(0) : Collections.<AlternateDataStream>emptyList();
     }
 
     public int contentGetSupportedField(int fieldIndex,
