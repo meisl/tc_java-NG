@@ -106,42 +106,27 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             default:
                 throw new RuntimeException("NYI: " + this.helper);
         }
-        System.out.println(matchingLines);
-        /*
-        Func2<MatchResult, String, String> groupingFn = new Func2<MatchResult, String, String>() { public String apply(MatchResult m, String lastKey) {
-            String fileName = m.group(fileNameIdx);
-            return fileName != null ? fileName : lastKey;
-        } };
-        */
+        //System.out.println(matchingLines);
+
         Tuple2<String, String> t = Tuple.create("a", "b");
         Tuple1<String> t1 = t;
         Fn1<Tuple2<String, ?>, String> proj0 = Tuple2.fn_project0();
         Fn1<Tuple2<?, String>, String> proj1 = Tuple2.fn_project1();
-        System.out.println(proj0.apply(t));
+        //System.out.println(Tuple2.fn_project0().apply(t));
 
-        Fn2<Tuple3<String, String, String>, String, String> groupingFn = new Fn2<Tuple3<String, String, String>, String, String>() {
-            public String apply(Tuple3<String, String, String> t, String lastKey) {
-                System.out.println(">>> " + t + ", " + lastKey);
-                String fileName = t.item0;  //(fileNameIdx == 3) ? t.group(fileNameIdx);
-                return fileName != null ? fileName : lastKey;
-            }
-        };
-        
-        //lists = groupBy(matchingLines, groupingFn, Predicate.notNull()).toList();
         lists = matchingLines.sectionBy(
-            //groupingFn
             Func.<String>elvis().compose(Tuple3.<String, Tuple3<String,String,String>>fn_project0())
             , Predicate.notNull().compose(Tuple3.fn_project1())
         ).toList();
         for (SectionIterator<String, Tuple3<String,String,String>> list: lists) {
             //if (list.file.equals(file)) {
-                System.out.println(list.key() + "   " + list);
+                System.out.println("KEY: " + list.key());// + "   " + list);
                 while (list.hasNext()) {
                     System.out.println("   " + list.next());
                 }
             //}
         }
-        return null;
+        return Collections.emptyList();
 
         /*
         List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();

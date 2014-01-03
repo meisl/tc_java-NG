@@ -159,18 +159,19 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
         return new SeqIteratorAdapter<SectionIterator<TKey, T>>() {
             private TKey lastKey = null;
             private T pendingElem = null; // <<<<
-
+            private boolean gotPending = false;
+            
             public SectionIterator<TKey, T> seekNext() {
-                System.out.println(">>>seekNext");
-                T elem = pendingElem; // <<<<
-                if (elem == null) {
-                    if (underlying.hasNext()) {
-                        elem = underlying.next();
-                    }
+                T elem;
+                if (gotPending) {
+                    elem = pendingElem;
+                    gotPending = false;
+                } else if (underlying.hasNext()) {
+                    elem = underlying.next();
                 } else {
-                    pendingElem = null; // <<<<
+                    return endOfSeq();
                 }
-                while (elem != null) {
+                while (true) { // <<<<
                     TKey key = keyOf.apply(elem, lastKey);
                     if (key.equals(lastKey)) {
                         this.previous.append(elem);
@@ -187,13 +188,17 @@ public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumerati
                                     return elem;
                                 }
                                 pendingElem = elem; // <<<
+                                gotPending = true;
                                 return endOfSeq();
                             }
                         };
                     }
-                    elem = underlying.hasNext() ? underlying.next() : null; // <<<<
+                    if (underlying.hasNext()) {
+                        elem = underlying.next();
+                    } else {
+                        return endOfSeq();
+                    }
                 }
-                return endOfSeq();
             }
         };
     }
