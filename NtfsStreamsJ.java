@@ -166,30 +166,34 @@ public class NtfsStreamsJ extends ContentPlugin {
         */
         return lists.size() > 0 ? lists.get(0) : Collections.<AlternateDataStream>emptyList();
     }
+    
+    public int getCount(String fileName) throws IOException, InterruptedException {
+        return getStreams(fileName).size();
+    }
+    
+    public String getSummary(String fileName) throws IOException, InterruptedException {
+        List<AlternateDataStream> streams = getStreams(fileName);
+        int n = streams.size();
+        if (n == 0) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder(n + " ADSs:");
+        for (AlternateDataStream ads: streams) {
+            result.append(System.lineSeparator()).append(ads);
+        }
+        result.append(System.lineSeparator());
+        return result.toString();
+    }
 
     protected void initFields() {
 
-        define(new Field.INT("count") {
-            public int getValue(String fileName) throws IOException, InterruptedException {
-                return getStreams(fileName).size();
-            }
-        });
+        define(new Field.INT("count") { public int getValue(String fileName) throws IOException, InterruptedException {
+            return getCount(fileName);
+        }});
 
-        define(new Field.STRING("summary") {
-            public String getValue(String fileName) throws IOException, InterruptedException {
-                List<AlternateDataStream> streams = getStreams(fileName);
-                int n = streams.size();
-                if (n == 0) {
-                    return "";
-                }
-                StringBuilder result = new StringBuilder(n + " ADSs:");
-                for (AlternateDataStream ads: streams) {
-                    result.append(System.lineSeparator()).append(ads);
-                }
-                result.append(System.lineSeparator());
-                return result.toString();
-            }
-        });
+        define(new Field.STRING("summary") { public String getValue(String fileName) throws IOException, InterruptedException {
+            return getSummary(fileName);
+        }});
 
     }
 

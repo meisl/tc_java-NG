@@ -1,11 +1,9 @@
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
 import java.io.*;
 
 import java.util.*;
-import java.util.regex.*;
 
 import plugins.wdx.WDXPluginAdapter;
 import plugins.wdx.FieldValue;
@@ -17,7 +15,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
         static abstract class STRING extends Field<String> {
             protected STRING(String name) {
-                super(name, FT_STRING);
+                super(name, FT_STRING, String.class);
             }
             final String _getValue(String fileName) throws IOException, InterruptedException {
                 return getValue(fileName);
@@ -27,7 +25,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
         static abstract class INT extends Field<Integer> {
             protected INT(String name) {
-                super(name, FT_NUMERIC_32);
+                super(name, FT_NUMERIC_32, Integer.class);
             }
             final Integer _getValue(String fileName) throws IOException, InterruptedException {
                 return getValue(fileName);
@@ -37,20 +35,28 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
         public final String name;
         public final int type;
-        private Field(String name, int type) {
+        public final Class<T> javaType;
+
+        private Field(String name, int type, Class<T> javaType) {
             // TODO: check validity of field name
             this.name = name;
             this.type = type;
+            this.javaType = javaType;
         }
-        
+
         abstract T _getValue(String fileName) throws IOException, InterruptedException;
 
+        public String toString() {
+            return javaType.getName().replace("java.lang.", "") + " " + name;
+        }
     }
 
+    private final Log myLog;
     protected final Log log;
 
     protected ContentPlugin() {
-        log = LogFactory.getLog(this.getClass());
+        this.myLog = LogFactory.getLog(ContentPlugin.class);
+        this.log = LogFactory.getLog(this.getClass());
         initFields();
     }
     
@@ -66,12 +72,28 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         namesToFields.put(field.name, field);
         fields.add(field);
     }
+    
+    public Iterable<Field<?>> fields() {
+        return this.fields;
+    }
+
+    public void listFields() {
+        listFields(System.out);
+    }
+
+    public void listFields(PrintStream out) {
+        int n = 0;
+        for (Field<?> f: fields()) {
+            out.println(n++ + "\t" + f);
+        }
+    }
 
     public final int contentGetSupportedField(int fieldIndex,
                                                 StringBuffer fieldName,
                                                 StringBuffer units,
                                                 int maxlen)
         {
+        myLog.debug("contentGetSupportedField(" + fieldIndex + ",...," + maxlen + ")");
         if (fieldIndex >= fields.size()) {
             return FT_NOMOREFIELDS;
         }
@@ -87,7 +109,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                                 int maxlen,
                                 int flags)
         {
-        log.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...)");
+        myLog.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...," + maxlen + ", " + flags + ")");
         if (fieldIndex >= fields.size()) {
             return FT_NOSUCHFIELD;
         }
