@@ -81,17 +81,21 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
     private final Helper helper;
     
     public NtfsStreamsJ() {
-        this(Helper.STREAMS);
+        this(Helper.LADS);
     }
     
     public NtfsStreamsJ(Helper helper) {
         log.debug(NtfsStreamsJ.class.getName() + "(" + helper + ")");
         this.helper = helper;
     }
+    
+    private File cachedFolder;
+    private Map<File, List<AlternateDataStream>> cache = new HashMap<>();
 
     public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
         final File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
+        final File folder = file.getParentFile();
         
         final SeqIterator<Tuple3<String, String, String>> matchingLines;
         List<List<AlternateDataStream>> lists;
@@ -100,7 +104,17 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 matchingLines = this.helper.matchingLines(file.getPath());
                 break;
             case LADS:
-                matchingLines = this.helper.matchingLines(file.getParent());
+                log.debug("folder=" + folder + ", cachedFolder=" + cachedFolder);
+                if (!folder.equals(cachedFolder)) {
+                    log.debug("making new cache...");
+                    cache.clear();
+                    cachedFolder = folder;
+                    matchingLines = this.helper.matchingLines(file.getParent());
+                } else {
+                    List<AlternateDataStream> result = Func.<List<AlternateDataStream>>elvis().apply(cache.get(file), Collections.<AlternateDataStream>emptyList());
+                    log.debug("from cache: " + result.size());
+                    return result;
+                }
                 break;
             default:
                 throw new RuntimeException("NYI: " + this.helper);
@@ -115,11 +129,13 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
             Func.<String>elvis().compose(proj0)
             , Predicate.notNull().compose(proj1)
         )
+        /*
         .filter(new Predicate<SectionIterator<String, ?>>() {
             public Boolean apply(SectionIterator<String, ?> s) {
                 return new File(s.key()).equals(file);
             }
         })
+        */
         .map(new Fn1<SectionIterator<String, Tuple3<String,String,String>>, List<AlternateDataStream>> () {
             public List<AlternateDataStream> apply(SectionIterator<String, Tuple3<String,String,String>> section) {
                 List<AlternateDataStream> result = new ArrayList<AlternateDataStream>();
@@ -133,10 +149,19 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                     result.add(s);
                     log.debug(s);
                 }
+                if (folder.equals(cachedFolder)) {
+                    cache.put(new File(section.key()), result);
+                }
                 return result;
             }
         })
         .toList();
+        if (folder.equals(cachedFolder)) {
+            List<AlternateDataStream> result = Func.<List<AlternateDataStream>>elvis().apply(cache.get(file), Collections.<AlternateDataStream>emptyList());
+            log.debug("from cache: " + result.size());
+            return result;
+        }
+        /*
         for (List<AlternateDataStream> list: lists) {
             //if (list.file.equals(file)) {
                 //System.out.println("KEY: " + list.key());// + "   " + list);
@@ -145,6 +170,7 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
                 }
             //}
         }
+        */
         return lists.size() > 0 ? lists.get(0) : Collections.<AlternateDataStream>emptyList();
     }
 
