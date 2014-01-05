@@ -1,15 +1,8 @@
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.*;
 
 import java.util.*;
 import java.util.regex.*;
-
-import plugins.wdx.WDXPluginAdapter;
-import plugins.wdx.FieldValue;
-import static plugins.wdx.FieldValue.*;
 
 /* Mark Russinovich's <a href="http://technet.microsoft.com/de-de/sysinternals/bb897440">streams.exe</a> v1.56
  * <p>
@@ -17,7 +10,7 @@ import static plugins.wdx.FieldValue.*;
  * <p>
  * since Windows Vista: dir /r 
  */
-public class NtfsStreamsJ extends WDXPluginAdapter {
+public class NtfsStreamsJ extends ContentPlugin {
 
     public static enum Helper {
         STREAMS(
@@ -77,16 +70,16 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         
     }
 
-    private Log log = LogFactory.getLog(NtfsStreamsJ.class);
     private final Helper helper;
     
     public NtfsStreamsJ() {
         this(Helper.LADS);
     }
-    
+
     public NtfsStreamsJ(Helper helper) {
         log.debug(NtfsStreamsJ.class.getName() + "(" + helper + ")");
         this.helper = helper;
+
     }
     
     private File cachedFolder;
@@ -174,59 +167,30 @@ public class NtfsStreamsJ extends WDXPluginAdapter {
         return lists.size() > 0 ? lists.get(0) : Collections.<AlternateDataStream>emptyList();
     }
 
-    public int contentGetSupportedField(int fieldIndex,
-                                         StringBuffer fieldName,
-                                         StringBuffer units,
-                                         int maxlen)
-        {
-        switch (fieldIndex) {
-            case 0:
-                fieldName.append("count");
-                return FT_NUMERIC_32;
-            case 1:
-                fieldName.append("summary");
-                return FT_STRING;
-        }
-        return FT_NOMOREFIELDS;
-    }
+    protected void initFields() {
 
-    public int contentGetValue(String fileName,
-                                int fieldIndex,
-                                int unitIndex,
-                                FieldValue fieldValue,
-                                int maxlen,
-                                int flags)
-        {
-        log.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...)");
-        try {
-            List<AlternateDataStream> streams = getStreams(fileName);
-            switch (fieldIndex) {
-                case 0:
-                    fieldValue.setValue(FT_NUMERIC_32, streams.size());
-                    log.debug("count=" + streams.size());
-                    return FT_NUMERIC_32;
-                case 1:
-                    int n = streams.size();
-                    if (n == 0) {
-                        fieldValue.setValue(FT_STRING, "");
-                    } else {
-                        StringBuilder result = new StringBuilder(n + " ADSs:");
-                        for (AlternateDataStream ads: streams) {
-                            result.append(System.lineSeparator()).append(ads);
-                        }
-                        result.append(System.lineSeparator());
-                        fieldValue.setValue(FT_STRING, result.toString());
-                }
-                return FT_STRING;
+        define(new Field.INT("count") {
+            public int getValue(String fileName) throws IOException, InterruptedException {
+                return getStreams(fileName).size();
             }
-        } catch (IOException e) {
-            log.error(e);
-            return FT_FILEERROR;
-        } catch (InterruptedException e) {
-            log.error(e);
-            return FT_FILEERROR;
-        }
-        return FT_NOSUCHFIELD;
+        });
+
+        define(new Field.STRING("summary") {
+            public String getValue(String fileName) throws IOException, InterruptedException {
+                List<AlternateDataStream> streams = getStreams(fileName);
+                int n = streams.size();
+                if (n == 0) {
+                    return "";
+                }
+                StringBuilder result = new StringBuilder(n + " ADSs:");
+                for (AlternateDataStream ads: streams) {
+                    result.append(System.lineSeparator()).append(ads);
+                }
+                result.append(System.lineSeparator());
+                return result.toString();
+            }
+        });
+
     }
 
 }
