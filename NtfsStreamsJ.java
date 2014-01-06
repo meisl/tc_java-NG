@@ -187,6 +187,15 @@ public class NtfsStreamsJ extends ContentPlugin {
 
     protected void initFields() {
 
+        define(new EditableField.STRING("foo") {
+            public String getValue(String fileName) throws IOException, InterruptedException {
+                return "bar";
+            }
+            public void setValue(String fileName, String value) throws IOException, InterruptedException {
+                log.info("YES! (\"" + value + "\")");
+            }
+        });
+
         define(new Field.INT("count") { public int getValue(String fileName) throws IOException, InterruptedException {
             return getCount(fileName);
         }});
