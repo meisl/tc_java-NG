@@ -12,6 +12,16 @@ import static plugins.wdx.FieldValue.*;
 public abstract class ContentPlugin extends WDXPluginAdapter {
 
     static abstract class Field<T> {
+    
+        /* Found that (my) TotalCommander on my (my) WinXP always passes 259 as
+         * the max name length including the trailing 0 to
+         * contentGetSupportedField(..) so this is the bound to be checked in
+         * runTests().
+         * <p>
+         * Note that another check against the actual value passed to
+         * contentGetSupportedField is performed on invocation of that method.
+         */
+        public static final int MAX_NAME_LENGTH = 258;
 
         static abstract class STRING extends Field<String> {
             protected STRING(String name) {
@@ -39,6 +49,9 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
         private Field(String name, int type, Class<T> javaType) {
             // TODO: check validity of field name
+            if (name == null) {
+                throw new IllegalArgumentException("field name must not be null!");
+            }
             this.name = name;
             this.type = type;
             this.javaType = javaType;
@@ -48,6 +61,15 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
         public String toString() {
             return javaType.getName().replace("java.lang.", "") + " " + name;
+        }
+        
+        public final void assertValidNameLength() {
+            assertValidNameLength(MAX_NAME_LENGTH);
+        }
+
+        public final void assertValidNameLength(int maxlen) {
+            if (this.name.length() > maxlen)
+                throw new IllegalArgumentException("field name too long (" + name.length() + " > " + maxlen + "): \"" + name + "\"");
         }
     }
 
@@ -67,7 +89,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
     protected final <T, F extends Field<T>> void define(F field) {
         if (namesToFields.containsKey(field.name)) {
-            throw new RuntimeException("duplicate field name " + field.name);
+            throw new RuntimeException("duplicate field name \"" + field.name + "\"");
         }
         namesToFields.put(field.name, field);
         fields.add(field);
@@ -93,11 +115,12 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                                                 StringBuffer units,
                                                 int maxlen)
         {
-        myLog.debug("contentGetSupportedField(" + fieldIndex + ",...," + maxlen + ")");
+        myLog.trace("contentGetSupportedField(" + fieldIndex + ",...," + maxlen + ")");
         if (fieldIndex >= fields.size()) {
             return FT_NOMOREFIELDS;
         }
         Field<?> field = fields.get(fieldIndex);
+        field.assertValidNameLength(maxlen - 1);    // maxlen includes the trailing 0
         fieldName.append(field.name);
         return field.type;
     }
@@ -109,7 +132,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                                 int maxlen,
                                 int flags)
         {
-        myLog.debug("contentGetValue('" + fileName + "', " + fieldIndex + ",...," + maxlen + ", " + flags + ")");
+        myLog.trace("contentGetValue('" + fileName + "', " + fieldIndex + ",...," + maxlen + ", " + flags + ")");
         if (fieldIndex >= fields.size()) {
             return FT_NOSUCHFIELD;
         }
@@ -128,4 +151,25 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
     }
 
+    public void runTests(String... fileNames) throws IOException, InterruptedException {
+        
+        // defines at least one field
+        if (this.fields.size() < 0) {
+            throw new RuntimeException(this.getClass().getName() + " should define at least 1 field");
+        }
+        
+        // no field name too long
+        for (Field<?> f: fields) {
+            f.assertValidNameLength();
+        }
+        
+        for (String fileName: fileNames) {
+            for (Field<?> f: fields) {
+                Object result = f._getValue(fileName + "x");
+                System.out.println("TEST " + f + " on \"" + fileName + "\": " + result);
+            }
+        }
+    }
+
 }
+
