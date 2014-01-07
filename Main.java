@@ -5,9 +5,9 @@ import java.io.*;
 public class Main {
 
     public static void main(String... args) throws IOException, InterruptedException {
-        NtfsStreamsJ plugin = new NtfsStreamsJ(NtfsStreamsJ.Helper.LADS);
-        plugin.runTests(args);
+        NtfsStreamsJ plugin = new NtfsStreamsJ(NtfsStreamsJ.Helper.STREAMS);
         plugin.listFields();
+        plugin.runTests(args);
         for (String arg: args) {
             System.out.println();
             System.out.println("Main(..): " + arg);

@@ -95,6 +95,23 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             public abstract void setValue(String fileName, String value) throws IOException, InterruptedException;
         }
 
+        static abstract class INT extends EditableField<Integer> {
+            protected INT(String name) {
+                super(name, FT_NUMERIC_32, Integer.class);
+            }
+            final Integer _getValue(String fileName) throws IOException, InterruptedException {
+                return getValue(fileName);
+            }
+            final void _setValue(String fileName, FieldValue fieldValue) throws IOException, InterruptedException {
+                setValue(fileName, fieldValue.getIntValue());
+            }
+            public abstract int getValue(String fileName) throws IOException, InterruptedException;
+            public final void setValue(String fileName, Integer value) throws IOException, InterruptedException {
+                setValue(fileName, (int)value);
+            }
+            public abstract void setValue(String fileName, int value) throws IOException, InterruptedException;
+        }
+
         private EditableField(String name, int type, Class<T> javaType) {
             super(name, type, javaType);
         }
@@ -248,7 +265,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         
         for (String fileName: fileNames) {
             for (Field<?> f: fields) {
-                Object result = f._getValue(fileName + "x");
+                Object result = f._getValue(fileName);
                 System.out.println("TEST " + f + " on \"" + fileName + "\": " + result);
             }
         }
