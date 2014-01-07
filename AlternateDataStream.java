@@ -84,20 +84,22 @@ public class AlternateDataStream {
         this.fileName = hostFile.getPath();
         this.rawName = rawName;
         // TODO: does hostFile exist?
-        this.streamFile = new File(fileName + ":" + rawName);
-        if (streamFile.exists()) {
-            this.length = streamFile.length();
-        } else {
-            try {
-                new FileOutputStream(streamFile).close();
-            } catch (IOException e) {
-            }
+        
+        if (this.exists()) {
+            this.length = getStreamFile().length();
+        }
+    }
+    
+    public AlternateDataStream createIfNotExists() throws IOException {
+        if (!exists()) {
+            new FileOutputStream(getStreamFile()).close();
             this.length = 0;
         }
+        return this;
     }
 
     public int length() {
-        return (int)this.length;
+        return this.exists() ? (int)this.length : -1;
     }
     
     public String getRawName() {
