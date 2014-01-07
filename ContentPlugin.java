@@ -50,13 +50,10 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         public final Class<T> javaType;
 
         private Field(String name, int type, Class<T> javaType) {
-            // TODO: check validity of field name
-            if (name == null) {
-                throw new IllegalArgumentException("field name must not be null!");
-            }
             this.name = name;
             this.type = type;
             this.javaType = javaType;
+            assertValidName();
         }
 
         abstract T _getValue(String fileName) throws IOException, InterruptedException;
@@ -76,6 +73,16 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         public final void assertValidNameLength(int maxlen) {
             if (this.name.length() > maxlen)
                 throw new IllegalArgumentException("field name too long (" + name.length() + " > " + maxlen + "): \"" + name + "\"");
+        }
+        
+        public final void assertValidName() {
+            if (name == null) {
+                throw new IllegalArgumentException("field name must not be null!");
+            }
+            assertValidNameLength();
+            if (name.contains(".") || name.contains("|") || name.contains(":")) {
+                throw new IllegalArgumentException("field name must not contain '.', '|' or ':': \"" + name + "\"");
+            }
         }
     }
 
