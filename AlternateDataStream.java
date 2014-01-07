@@ -1,3 +1,5 @@
+import java.io.*;
+
 public class AlternateDataStream {
 
     public static final int CP_HASH        = 0x23;  // "#".codePointAt(0);
@@ -58,20 +60,44 @@ public class AlternateDataStream {
         }
         return sb.toString();
     }
-    private final String fileName;
-    private final String rawName;
-    private final int length;
+    private File hostFile;
+    private File streamFile;
+    
+    private String fileName;
+    private String rawName;
+    private long length;
     
     private String name;
     
-    public AlternateDataStream(String fileName, String rawName, int length) {
+    public AlternateDataStream(String fileName, String rawName, long length) {
         this.fileName = fileName;
         this.rawName = rawName;
         this.length = length;
     }
-    
+
+    public AlternateDataStream(String hostFileName, String rawName) {
+        this(new File(hostFileName), rawName);
+    }
+
+    public AlternateDataStream(File hostFile, String rawName) {
+        this.hostFile = hostFile;
+        this.fileName = hostFile.getPath();
+        this.rawName = rawName;
+        // TODO: does hostFile exist?
+        this.streamFile = new File(fileName + ":" + rawName);
+        if (streamFile.exists()) {
+            this.length = streamFile.length();
+        } else {
+            try {
+                new FileOutputStream(streamFile).close();
+            } catch (IOException e) {
+            }
+            this.length = 0;
+        }
+    }
+
     public int length() {
-        return this.length;
+        return (int)this.length;
     }
     
     public String getRawName() {
@@ -85,8 +111,45 @@ public class AlternateDataStream {
         return this.name;
     }
     
+    public File getHostFile() {
+        if (this.hostFile == null) {
+            this.hostFile = new File(this.fileName);
+        }
+        return this.hostFile;
+    }
+
+    public File getStreamFile() {
+        if (this.streamFile == null) {
+            this.streamFile = new File(this.fileName + ":" + this.rawName);
+        }
+        return this.streamFile;
+    }
+    
+    public boolean exists() {
+        return this.getStreamFile().exists();
+    }
+    
+    public String getContents() throws IOException {
+        StringBuilder result = new StringBuilder();
+        BufferedReader in = new BufferedReader(new FileReader(this.getStreamFile()));
+        char[] buffer = new char[1024];
+        int charsRead;
+        while ((charsRead = in.read(buffer, 0, 1024)) != -1) {
+            result.append(buffer, 0, charsRead);
+        }
+        in.close();
+        return result.toString();
+    }
+
+    public void setContents(String contents) throws IOException {
+        Writer out = new BufferedWriter(new FileWriter(this.getStreamFile()));
+        out.write(contents);
+        out.flush();
+        out.close();
+    }
+    
     public String toString() {
-        return "\t" + this.length() + "\t\"" + ":" + this.getName() + "\"";
+        return "\t" + this.length() + "\t\"" + ":" + this.getRawName() + "\"";
     }
 
 }
