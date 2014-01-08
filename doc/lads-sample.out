@@ -1,0 +1,69 @@
+
+LADS - Freeware version 4.10
+(C) Copyright 1998-2007 Frank Heyne Software (http://www.heysoft.de)
+This program lists files with alternate data streams (ADS)
+Use LADS on your own risk!
+
+Scanning directory C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\
+
+      size  ADS in file
+----------  ---------------------------------
+         3  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\:foo
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:
+         3  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:$
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:&
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:*
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:a
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:|
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:>
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:<
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Demo.tst.bak:?
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\foldersCanHaveStreamsToo\:foo
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x01|^A)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x02|^B)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x03|^C)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x04|^D)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x05|^E)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x06|^F)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x07|^G)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:	(0x09)|^I
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x0e|^N)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x0f|^O)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x10|^P)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x11|^Q)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x12|^R)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x13|^S)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x14|^T)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x15|^U)
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:(0x16|^V)
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:#
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:$
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:&
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:?
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:|
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:*
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:>
+        31  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:<
+        27  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\Zone.Identifier.tst:Zone.Identifier
+
+       558 bytes in 43 ADS listed
+
+LADS - Freeware version 4.10
+(C) Copyright 1998-2007 Frank Heyne Software (http://www.heysoft.de)
+This program lists files with alternate data streams (ADS)
+Use LADS on your own risk!
+
+Scanning directory C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\foldersCanHaveStreamsToo\
+
+      size  ADS in file
+----------  ---------------------------------
+         6  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\foldersCanHaveStreamsToo\:foo
+        11  C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\foldersCanHaveStreamsToo\weird_0x16(^V).tst:(0x16|^V)
+
+        17 bytes in 2 ADS listed

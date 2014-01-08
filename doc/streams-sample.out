@@ -1,0 +1,31 @@
+
+Streams v1.56 - Enumerate alternate NTFS data streams
+Copyright (C) 1999-2007 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+C:\Programme\totalcmd\plugins\wdx\NtfsStreamsJ\test\weirdStreamNames.tst:
+      :(0x01|^A):$DATA	11
+      :(0x02|^B):$DATA	11
+      :(0x03|^C):$DATA	11
+      :(0x04|^D):$DATA	11
+      :(0x05|^E):$DATA	11
+      :(0x06|^F):$DATA	11
+      :(0x07|^G):$DATA	11
+      :	(0x09)|^I:$DATA	11
+      :(0x0e|^N):$DATA	11
+      :(0x0f|^O):$DATA	11
+      :(0x10|^P):$DATA	11
+      :(0x11|^Q):$DATA	11
+      :(0x12|^R):$DATA	11
+      :(0x13|^S):$DATA	11
+      :(0x14|^T):$DATA	11
+      :(0x15|^U):$DATA	11
+      :(0x16|^V):$DATA	11
+               :#:$DATA	31
+               :$:$DATA	31
+               :&:$DATA	31
+               :?:$DATA	31
+               :|:$DATA	31
+               :*:$DATA	31
+               :>:$DATA	31
+               :<:$DATA	31
