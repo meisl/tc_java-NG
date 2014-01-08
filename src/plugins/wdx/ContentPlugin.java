@@ -1,3 +1,5 @@
+package plugins.wdx;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,7 +27,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
          */
         public static final int MAX_NAME_LENGTH = 258;
 
-        static abstract class STRING extends Field<String> {
+        public static abstract class STRING extends Field<String> {
             protected STRING(String name) {
                 super(name, FT_STRING, String.class);
             }
@@ -35,7 +37,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             public abstract String getValue(String fileName) throws IOException;
         }
 
-        static abstract class INT extends Field<Integer> {
+        public static abstract class INT extends Field<Integer> {
             protected INT(String name) {
                 super(name, FT_NUMERIC_32, Integer.class);
             }
@@ -92,7 +94,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
     public static abstract class EditableField<T> extends Field<T> {
 
-        static abstract class STRING extends EditableField<String> {
+        public static abstract class STRING extends EditableField<String> {
             protected STRING(String name) {
                 super(name, FT_STRING, String.class);
             }
@@ -106,7 +108,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             public abstract void setValue(String fileName, String value) throws IOException;
         }
 
-        static abstract class INT extends EditableField<Integer> {
+        public static abstract class INT extends EditableField<Integer> {
             protected INT(String name) {
                 super(name, FT_NUMERIC_32, Integer.class);
             }
