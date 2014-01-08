@@ -1,3 +1,5 @@
+package seq;
+
 import java.util.*;
 
 public abstract class SectionIteratorAdapter<TKey, TElem> extends SeqIteratorAdapter<TElem> implements SectionIterator<TKey, TElem> {

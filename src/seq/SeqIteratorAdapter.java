@@ -1,3 +1,5 @@
+package seq;
+
 import fun.*;
 import java.util.*;
 
