@@ -15,5 +15,10 @@ NtfsStreamsJ itself relies on these:
 * since Windows Vista: the built-in `dir /r` [TODO]
 
 If you're below Windows Vista or just feel like trying 'em out you need to download and unpack
-`streams` and/or `lads` into NtfsStreamsj's plugin folder
+`streams` and/or `lads` into `vendor\streams\` and/or `vendor\lads\` under NtfsStreamsj's plugin folder
 (probably `"C:\Program Files\totalcmd\plugins\wdx\NtfsStreamsJ"`).
+
+```
+SET JAVA_HOME=%PROGRAMFILES%\Java\jdk1.7.0_25
+SET COMMANDER_PATH=%PROGRAMFILES%\totalcmd
+```

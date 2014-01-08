@@ -16,15 +16,15 @@ import java.security.*;
  */
 public class NtfsStreamsJ extends ContentPlugin {
 
-    public static enum Helper {
+    public enum Helper {
         STREAMS(
-            "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\streams.exe",
+            ".\\vendor\\streams\\streams.exe",
             //"^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
             "^\\s+:([^:]*):\\$DATA\\t(\\d+)|(([a-zA-z]:\\\\)?([^:?*|<>/]+\\\\)*([^:?*|<>/\\\\]+)):$",
             3, 1, 2
         ),
         LADS(
-            "c:\\Programme\\totalcmd\\plugins\\wdx\\NtfsStreamsJ\\lads.exe",
+            ".\\vendor\\lads\\lads.exe",
             "^\\s*(\\d+)\\s+(.+?)\\\\?:([^:]*)$",
             2, 3, 1
         );
@@ -35,6 +35,10 @@ public class NtfsStreamsJ extends ContentPlugin {
 
         
         Helper(String exeName, String pattern, int fileNameIdx, int streamNameIdx, int streamSizeIdx) {
+            try {
+                exeName = new File(exeName).getCanonicalPath();
+            } catch (IOException e) {
+            }
             this.exeName = exeName;
             this.outputLinePattern = Pattern.compile(pattern);
             fn_permute = Tuple3.fn_permute(fileNameIdx - 1, streamNameIdx - 1, streamSizeIdx - 1); // -1 because group(0) is discarded
@@ -43,7 +47,14 @@ public class NtfsStreamsJ extends ContentPlugin {
         public SeqIterator<String> rawOutput(String fileName) throws IOException {
             ProcessBuilder pb = new ProcessBuilder(this.exeName, fileName);
             pb.redirectErrorStream(true);
-            Process p = pb.start();
+            Process p;
+            try {
+                p = pb.start();
+            } catch (IOException e) {
+                log.error(e);
+                throw e;
+            }
+
             // ATTENTION: don't do p.waitFor() - it'd block forever if helper produces more output than the output stream's buffer can hold at once...
             final LineNumberReader r = new LineNumberReader(new InputStreamReader(p.getInputStream()));
             return new SeqIteratorAdapter<String>("linesFrom(" + pb.command() + ")") {
@@ -81,7 +92,12 @@ public class NtfsStreamsJ extends ContentPlugin {
     }
 
     public NtfsStreamsJ(Helper helper) {
-        log.debug(NtfsStreamsJ.class.getName() + "(" + helper + ")");
+        String cwd = null;
+        try {
+            cwd = new File(".").getCanonicalPath();
+        } catch (IOException e) {
+        }
+        log.info(NtfsStreamsJ.class.getName() + "(" + helper + "), cwd=" + cwd);
         this.helper = helper;
 
     }

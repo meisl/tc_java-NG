@@ -135,12 +135,13 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
     }
 
-    private final Log myLog;
-    protected final Log log;
+    private static final Log myLog = LogFactory.getLog(ContentPlugin.class);
+    protected static Log log;
 
     protected ContentPlugin() {
-        this.myLog = LogFactory.getLog(ContentPlugin.class);
-        this.log = LogFactory.getLog(this.getClass());
+        if (log == null) {
+            log = LogFactory.getLog(this.getClass());
+        }
         initFields();
     }
     

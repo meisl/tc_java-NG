@@ -1,0 +1,10 @@
+[DEFAULT]
+BASEURL=http://www.heysoft.de/en/software/lads.php?lang=EN
+[InternetShortcut]
+URL=http://www.heysoft.de/en/software/lads.php?lang=EN
+WorkingDirectory=C:\WINDOWS\
+IDList=
+IconFile=http://www.heysoft.de/favicon.ico
+IconIndex=1
+[{000214A0-0000-0000-C000-000000000046}]
+Prop3=19,2
