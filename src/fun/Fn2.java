@@ -1,3 +1,4 @@
+package fun;
 
 public abstract class Fn2<TArg0, TArg1, TResult> extends Fn1<TArg0, Fn1<? extends TArg1, ? super TResult>> {
 

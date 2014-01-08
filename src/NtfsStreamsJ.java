@@ -1,5 +1,6 @@
 
 import plugins.wdx.ContentPlugin;
+import fun.*;
 
 import java.io.*;
 import java.util.*;

@@ -1,3 +1,5 @@
+package fun;
+
 import java.util.regex.*;
 
 public abstract class Func {

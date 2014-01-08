@@ -1,3 +1,4 @@
+package fun;
 
 public class Fn0<TResult> {
 

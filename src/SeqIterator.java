@@ -1,3 +1,4 @@
+import fun.*;
 import java.util.*;
 
 public interface SeqIterator<T> extends Iterator<T>, Enumeration<T> {

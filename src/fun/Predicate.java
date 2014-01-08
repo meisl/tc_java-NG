@@ -1,3 +1,4 @@
+package fun;
 
 public abstract class Predicate<TArg> extends Fn1<TArg, Boolean> {
 

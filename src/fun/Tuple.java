@@ -1,3 +1,4 @@
+package fun;
 
 public abstract class Tuple {
 

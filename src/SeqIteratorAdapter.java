@@ -1,3 +1,4 @@
+import fun.*;
 import java.util.*;
 
 public abstract class SeqIteratorAdapter<T> implements SeqIterator<T>, Enumeration<T> {

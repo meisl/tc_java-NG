@@ -1,3 +1,4 @@
+package fun;
 
 public class Tuple3<T0, T1, T2> extends Tuple2<T0, T1> {
 
