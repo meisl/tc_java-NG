@@ -29,20 +29,20 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             protected STRING(String name) {
                 super(name, FT_STRING, String.class);
             }
-            final String _getValue(String fileName) throws IOException, InterruptedException {
+            final String _getValue(String fileName) throws IOException {
                 return getValue(fileName);
             }
-            public abstract String getValue(String fileName) throws IOException, InterruptedException;
+            public abstract String getValue(String fileName) throws IOException;
         }
 
         static abstract class INT extends Field<Integer> {
             protected INT(String name) {
                 super(name, FT_NUMERIC_32, Integer.class);
             }
-            final Integer _getValue(String fileName) throws IOException, InterruptedException {
+            final Integer _getValue(String fileName) throws IOException {
                 return getValue(fileName);
             }
-            public abstract int getValue(String fileName) throws IOException, InterruptedException;
+            public abstract int getValue(String fileName) throws IOException;
         }
 
         public final String name;
@@ -56,10 +56,14 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             assertValidName();
         }
 
-        abstract T _getValue(String fileName) throws IOException, InterruptedException;
+        abstract T _getValue(String fileName) throws IOException;
 
         public final boolean isEditable() {
             return this instanceof EditableField;
+        }
+        
+        public boolean isDelayInOrder(String fileName) throws IOException {
+            return false;
         }
 
         public String toString() {
@@ -92,40 +96,40 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             protected STRING(String name) {
                 super(name, FT_STRING, String.class);
             }
-            final String _getValue(String fileName) throws IOException, InterruptedException {
+            final String _getValue(String fileName) throws IOException {
                 return getValue(fileName);
             }
-            final void _setValue(String fileName, FieldValue fieldValue) throws IOException, InterruptedException {
+            final void _setValue(String fileName, FieldValue fieldValue) throws IOException {
                 setValue(fileName, fieldValue.getStr());
             }
-            public abstract String getValue(String fileName) throws IOException, InterruptedException;
-            public abstract void setValue(String fileName, String value) throws IOException, InterruptedException;
+            public abstract String getValue(String fileName) throws IOException;
+            public abstract void setValue(String fileName, String value) throws IOException;
         }
 
         static abstract class INT extends EditableField<Integer> {
             protected INT(String name) {
                 super(name, FT_NUMERIC_32, Integer.class);
             }
-            final Integer _getValue(String fileName) throws IOException, InterruptedException {
+            final Integer _getValue(String fileName) throws IOException {
                 return getValue(fileName);
             }
-            final void _setValue(String fileName, FieldValue fieldValue) throws IOException, InterruptedException {
+            final void _setValue(String fileName, FieldValue fieldValue) throws IOException {
                 setValue(fileName, fieldValue.getIntValue());
             }
-            public abstract int getValue(String fileName) throws IOException, InterruptedException;
-            public final void setValue(String fileName, Integer value) throws IOException, InterruptedException {
+            public abstract int getValue(String fileName) throws IOException;
+            public final void setValue(String fileName, Integer value) throws IOException {
                 setValue(fileName, (int)value);
             }
-            public abstract void setValue(String fileName, int value) throws IOException, InterruptedException;
+            public abstract void setValue(String fileName, int value) throws IOException;
         }
 
         private EditableField(String name, int type, Class<T> javaType) {
             super(name, type, javaType);
         }
 
-        abstract void _setValue(String fileName, FieldValue value) throws IOException, InterruptedException;
+        abstract void _setValue(String fileName, FieldValue value) throws IOException;
 
-        public abstract void setValue(String fileName, T value) throws IOException, InterruptedException;
+        public abstract void setValue(String fileName, T value) throws IOException;
 
     }
 
@@ -156,6 +160,15 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
     
     public Iterable<Field<?>> fields() {
         return this.fields;
+    }
+    
+    public <T> Field<T> getField(String name) {
+        return (Field<T>)namesToFields.get(name);
+    }
+    
+    public <T> T getValue(String fieldName, String fileName) throws IOException {
+        Field<T> field = this.<T>getField(fieldName);
+        return field._getValue(fileName);
     }
 
     public void listFields() {
@@ -216,14 +229,17 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
         Field<?> field = fields.get(fieldIndex);
         try {
+            if ((flags & CONTENT_DELAYIFSLOW) != 0) {
+                if (field.isDelayInOrder(fileName)) {
+                    myLog.info("delayed " + field.name + ".getValue(\"" + fileName + "\").");
+                    return FT_DELAYED;
+                }
+            }
             Object value = field._getValue(fileName);
-            log.debug(field.name + "=" + value);
+            myLog.info(field.name + "=" + value);
             fieldValue.setValue(field.type, value);
             return field.type;
         } catch (IOException e) {
-            log.error(e);
-            return FT_FILEERROR;
-        } catch (InterruptedException e) {
             log.error(e);
             return FT_FILEERROR;
         }
@@ -250,15 +266,12 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         } catch (IOException e) {
             log.error(e);
             return FT_FILEERROR;
-        } catch (InterruptedException e) {
-            log.error(e);
-            return FT_FILEERROR;
         }
         return FT_SETSUCCESS;
     }
 
 
-    public void runTests(String... fileNames) throws IOException, InterruptedException {
+    public void runTests(String... fileNames) throws IOException {
         
         // defines at least one field
         if (this.fields.size() < 0) {

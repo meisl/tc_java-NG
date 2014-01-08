@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.*;
 
+import java.security.*;
+
 import java.util.*;
 import java.util.regex.*;
 
@@ -85,7 +87,17 @@ public class NtfsStreamsJ extends ContentPlugin {
     private File cachedFolder;
     private Map<File, List<AlternateDataStream>> cache = new HashMap<>();
 
-    public List<AlternateDataStream> getStreams(String fileName) throws IOException, InterruptedException {
+    void clearCache() {
+        cache.clear();
+        cachedFolder = null;
+    }
+    
+    void resetCache(File folder) {
+        cache.clear();
+        cachedFolder = folder;
+    }
+
+    public List<AlternateDataStream> getStreams(String fileName) throws IOException {
         final File file = new File(fileName).getCanonicalFile();
         fileName = file.getPath();
         final File folder = file.getParentFile();
@@ -100,8 +112,7 @@ public class NtfsStreamsJ extends ContentPlugin {
                 log.debug("folder=" + folder + ", cachedFolder=" + cachedFolder);
                 if (!folder.equals(cachedFolder)) {
                     log.debug("making new cache...");
-                    cache.clear();
-                    cachedFolder = folder;
+                    resetCache(folder);
                     matchingLines = this.helper.matchingLines(file.getParent());
                 } else {
                     List<AlternateDataStream> result = Func.<List<AlternateDataStream>>elvis().apply(cache.get(file), Collections.<AlternateDataStream>emptyList());
@@ -167,11 +178,11 @@ public class NtfsStreamsJ extends ContentPlugin {
         return lists.size() > 0 ? lists.get(0) : Collections.<AlternateDataStream>emptyList();
     }
     
-    public int getCount(String fileName) throws IOException, InterruptedException {
+    public int getCount(String fileName) throws IOException {
         return getStreams(fileName).size();
     }
     
-    public String getSummary(String fileName) throws IOException, InterruptedException {
+    public String getSummary(String fileName) throws IOException {
         List<AlternateDataStream> streams = getStreams(fileName);
         int n = streams.size();
         if (n == 0) {
@@ -185,22 +196,122 @@ public class NtfsStreamsJ extends ContentPlugin {
         return result.toString();
     }
 
+    private final Pattern md5ContentsPattern = Pattern.compile("^([0-9a-fA-F]{32})@([0-9]+)$");
+
+    public String getMD5fromStream(File file) throws IOException {
+        if (file.isDirectory()) {
+            return null;
+        }
+        long lastModified = file.lastModified();
+        AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
+        if (md5ADS.exists()) {
+            String md5Contents = md5ADS.getContents();
+            long time;
+            // TODO: make regex match thread safe
+            Matcher matcher = md5ContentsPattern.matcher(md5Contents);
+            if (matcher.matches()) {
+                String md5Str = matcher.group(1);
+                String timeStr = matcher.group(2);
+                time = Long.parseLong(timeStr, 10);
+                if (lastModified <= time) {
+                    return md5Str;
+                } else {
+                    log.warn("invalid :MD5 " + md5Contents + " on \"" + file.getPath() + "\" - outdated by " + (lastModified - time) + " ms");
+                }
+            } else {
+                log.warn("invalid :MD5 " + md5Contents + " on \"" + file.getPath() + "\" - not matching /" + md5ContentsPattern + "/");
+            }
+        }
+        return null;
+    }
+    
+    
+    public String getMD5(String fileName) throws IOException {
+        File file = new File(fileName);
+        if (file.isDirectory()) {
+            return null;
+        }
+        String md5FromStream = getMD5fromStream(file);
+        if (md5FromStream != null) {
+            return md5FromStream;
+        }
+
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            log.error(e);
+            return "";
+        }
+        // TODO: lock file while calculating MD5
+        long lastModified = file.lastModified();
+        AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
+        FileInputStream fis = new FileInputStream(file);
+
+        byte[] buffer = new byte[1024 * 1024];
+
+        int nread = 0;
+        while ((nread = fis.read(buffer)) != -1) {
+            md.update(buffer, 0, nread);
+        };
+        fis.close();
+        byte[] mdbytes = md.digest();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < mdbytes.length; i++) {
+            sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        String result = sb.toString();
+        long t = System.currentTimeMillis();
+        md5ADS.createIfNotExists().setContents(result + "@" + t);
+        file.setLastModified(lastModified); // reset to original
+        return result;
+    }
+
+
+    private void defineFixedStreamName(final String streamName) {
+        define(new Field.STRING("stream_" + streamName.replace(".", "_")) {
+            public String getValue(String fileName) throws IOException {
+                AlternateDataStream s = new AlternateDataStream(fileName, streamName);
+                if (!s.exists()) {
+                    return null;
+                }
+                return s.getContents();
+            }
+        });
+    
+    }
+
     protected void initFields() {
 
-        define(new EditableField.STRING("foo") {
-            public String getValue(String fileName) throws IOException, InterruptedException {
-                return "bar";
+        define(new EditableField.STRING("MD5") {
+            public boolean isDelayInOrder(String fileName) throws IOException {
+                File file = new File(fileName);
+                if (file.isDirectory())
+                    return false;
+                if (file.length() < 1024 * 50)
+                    return false;
+                return getMD5fromStream(file) == null;
             }
-            public void setValue(String fileName, String value) throws IOException, InterruptedException {
-                log.info("YES! (\"" + value + "\")");
+            public String getValue(String fileName) throws IOException {
+                return getMD5(fileName);
+            }
+            public void setValue(String fileName, String value) throws IOException {
+                log.info("YES! (\"" + fileName + "\", " + value + ")");
             }
         });
 
-        define(new Field.INT("count") { public int getValue(String fileName) throws IOException, InterruptedException {
+        defineFixedStreamName("MD5");
+        defineFixedStreamName("Zone.Identifier");
+        defineFixedStreamName("\u0005DocumentSummaryInformation");
+        defineFixedStreamName("\u0005SummaryInformation");
+        defineFixedStreamName("\u0005OzngklrtOwudrp0bAayojd1qWh");
+        defineFixedStreamName("\u0005SebiesnrMkudrfcoIaamtykdDa");
+
+        define(new Field.INT("count") { public int getValue(String fileName) throws IOException {
             return getCount(fileName);
         }});
 
-        define(new Field.STRING("summary") { public String getValue(String fileName) throws IOException, InterruptedException {
+        define(new Field.STRING("summary") { public String getValue(String fileName) throws IOException {
             return getSummary(fileName);
         }});
 
