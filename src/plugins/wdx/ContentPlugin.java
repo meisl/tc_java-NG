@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import java.nio.*;
 import java.nio.file.*;
@@ -199,7 +200,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
     
     
     public Iterable<ByteBuffer> contents(final String fileName) throws IOException {
-        final FileChannel channel = FileChannel.open(Paths.get(fileName), StandardOpenOption.READ);
+        final AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get(fileName), StandardOpenOption.READ);
         return new Iterable<ByteBuffer>() {
             boolean iteratorCalled = false;
             public Iterator<ByteBuffer> iterator() {
@@ -209,23 +210,60 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 iteratorCalled = true;
                 return new Iterator<ByteBuffer>() {
                     
-                    ByteBuffer bufA = ByteBuffer.allocate(1024 * 1024);
-                    ByteBuffer bufB = ByteBuffer.allocate(1024 * 1024);
-                    ByteBuffer nextOut = bufA;
+                    ByteBuffer bufA = ByteBuffer.allocate(1024 * 128);  // ~2x cluster size seems optimal
+                    Future<Integer> bufAFuture = null;
                     boolean isBufAReady = false;
+
+                    ByteBuffer bufB = ByteBuffer.allocate(1024 * 128);  // ~2x cluster size seems optimal
+                    Future<Integer> bufBFuture = null;
                     boolean isBufBReady = false;
-                    boolean isFinished = false;
                     
-                    private boolean fillNextOut() throws IOException {
+                    ByteBuffer nextOut = bufA;
+                    long ttlBytesRead = 0;
+                    boolean isFinished = false;
+
+                    private Future<Integer> prepareNextOut(ByteBuffer buf) {
+                        nextOut = buf;
                         nextOut.clear();
-                        if (channel.read(nextOut) < 0) {
-                            channel.close();
-                            isFinished = true;
-                            return false;
+                        return channel.read(nextOut, ttlBytesRead);
+                    }
+
+                    private boolean fillNextOut() throws IOException {
+                        Future<Integer> f = null;
+                        if (nextOut == bufA) {
+                            if (bufAFuture == null) {
+                                bufAFuture = prepareNextOut(nextOut);
+                            }
+                            f = bufAFuture;
+                        } else { // buf == bufB
+                            if (bufBFuture == null) {
+                                bufBFuture = prepareNextOut(nextOut);
+                            }
+                            f = bufBFuture;
                         }
-                        nextOut.flip();
-                        nextOut.mark();
-                        return true;
+                        int bytesRead;
+                        //bytesRead = channel.read(nextOut, ttlBytesRead);
+                        try {
+                            bytesRead = f.get();
+                            if (bytesRead < 0) {
+                                channel.close();
+                                isFinished = true;
+                                return false;
+                            }
+                            nextOut.flip();
+                            nextOut.mark();
+                            ttlBytesRead += nextOut.remaining();
+                            return true;
+                        } catch (InterruptedException e) {
+                            myLog.error("Future.get() threw " + e);
+                            throw new AsynchronousCloseException();
+                        } catch (ExecutionException e) {
+                            Throwable inner = e.getCause();
+                            if (inner instanceof IOException) {
+                                throw new UncheckedIOException((IOException)inner);
+                            }
+                            throw new RuntimeException(inner);
+                        } // TODO: CancellationException, TimeoutException
                     }
                     
                     @Override
@@ -257,13 +295,14 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                             throw new NoSuchElementException();
                         }
                         if (nextOut == bufA) {
-                            nextOut = bufB;
+                            bufBFuture = prepareNextOut(bufB);
                             isBufAReady = false;
                             return bufA;
+                        } else { // nextOut == bufB
+                            bufAFuture = prepareNextOut(bufA);
+                            isBufBReady = false;
+                            return bufB;
                         }
-                        nextOut = bufA;
-                        isBufBReady = false;
-                        return bufB;
                     }
                     
                     @Override

@@ -274,9 +274,11 @@ public class NtfsStreamsJ extends ContentPlugin {
 
         long ttlRead = 0;
         long t = -System.currentTimeMillis();
+        
+        
 /*
         FileChannel in = FileChannel.open(Paths.get(fileName));
-        ByteBuffer buffer = ByteBuffer.allocate(1024 * 512);
+        ByteBuffer buffer = ByteBuffer.allocate(1024 * 128);
         while (in.read(buffer) >= 0) {
             buffer.flip();
             ttlRead += buffer.remaining();
@@ -285,6 +287,7 @@ public class NtfsStreamsJ extends ContentPlugin {
         };
         in.close();
 */
+        
         for (ByteBuffer buffer: contents(fileName)) {
             ttlRead += buffer.remaining();
             md.update(buffer);
