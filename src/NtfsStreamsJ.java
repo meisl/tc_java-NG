@@ -4,8 +4,15 @@ import fun.*;
 import seq.*;
 
 import java.io.*;
+
+import java.nio.*;
+import java.nio.channels.*;
+import java.nio.file.*;
+
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.regex.*;
+
 import java.security.*;
 
 /* Mark Russinovich's <a href="http://technet.microsoft.com/de-de/sysinternals/bb897440">streams.exe</a> v1.56
@@ -264,24 +271,42 @@ public class NtfsStreamsJ extends ContentPlugin {
         // TODO: lock file while calculating MD5
         long lastModified = file.lastModified();
         AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
-        FileInputStream fis = new FileInputStream(file);
-
-        byte[] buffer = new byte[1024 * 1024];
-
+        //FileInputStream fis = new FileInputStream(file);
+/*
         int nread = 0;
         while ((nread = fis.read(buffer)) != -1) {
             md.update(buffer, 0, nread);
         };
         fis.close();
+*/
+
+        FileChannel in = FileChannel.open(Paths.get(fileName));
+        ByteBuffer buffer = ByteBuffer.allocate(1024 * 512);
+        int nread = 0;
+        long ttlRead = 0;
+        long t = -System.currentTimeMillis();
+        while ( (nread = in.read(buffer)) >= 0) {
+            buffer.flip();
+            md.update(buffer);
+            buffer.clear();
+            ttlRead += nread;
+        };
+        t += System.currentTimeMillis();
+        log.info("time=" + (t / 1000.0) + " sec, ttlRead=" + ttlRead + ", size=" + in.size() + ", " + ((double)ttlRead * 0.00095367431640625 / t ) + " MB/sec");
+        in.close();
+        
+        
         byte[] mdbytes = md.digest();
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < mdbytes.length; i++) {
             sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
         }
         String result = sb.toString();
-        long t = System.currentTimeMillis();
-        md5ADS.createIfNotExists().setContents(result + "@" + t);
-        file.setLastModified(lastModified); // reset to original
+        if (file.canWrite()) {
+            t = System.currentTimeMillis();
+            md5ADS.createIfNotExists().setContents(result + "@" + t);
+            file.setLastModified(lastModified); // reset to original
+        }
         return result;
     }
 

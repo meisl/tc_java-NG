@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.*;
 
 import java.util.*;
+import java.nio.channels.*;
 
 import plugins.wdx.WDXPluginAdapter;
 import plugins.wdx.FieldValue;
@@ -185,6 +186,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
     }
 
+    @Override
     public final int contentGetSupportedField(int fieldIndex,
                                                 StringBuffer fieldName,
                                                 StringBuffer units,
@@ -218,7 +220,10 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
         return 0;
     }
+    
+    Thread workingThread;
 
+    @Override
     public final int contentGetValue(String fileName,
                                         int fieldIndex,
                                         int unitIndex,
@@ -231,23 +236,64 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             return FT_NOSUCHFIELD;
         }
         Field<?> field = fields.get(fieldIndex);
+        long t = 0;
         try {
-            if ((flags & CONTENT_DELAYIFSLOW) != 0) {
-                if (field.isDelayInOrder(fileName)) {
-                    myLog.info("delayed " + field.name + ".getValue(\"" + fileName + "\").");
+            if (field.isDelayInOrder(fileName)) {
+                if ((flags & CONTENT_DELAYIFSLOW) != 0) {
+                    myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
                     return FT_DELAYED;
+                }
+                myLog.warn("start slow " + field.name + ": \"" + fileName + "\"");
+                t = -System.currentTimeMillis();
+                synchronized(this) {
+                    if (workingThread != null) {
+                        myLog.error("workingThread: " + workingThread + " " + fileName);
+                        //throw new RuntimeException();
+                    }
+                    workingThread = Thread.currentThread();
                 }
             }
             Object value = field._getValue(fileName);
-            myLog.info(field.name + "=" + value);
+            synchronized(this) {
+                if (workingThread == Thread.currentThread()) {
+                    Thread.interrupted(); // clear interrupted status
+                    workingThread = null;
+                }
+            }
+            
+            if (t != 0) {
+                t += System.currentTimeMillis();
+                myLog.warn("end slow " + field.name + " after " + t + "ms: \"" + fileName + "\"");
+            } else {
+                myLog.info(field.name + "=" + value);
+            }
             fieldValue.setValue(field.type, value);
             return field.type;
+        } catch (AsynchronousCloseException e) {    // also catches ClosedByInterruptException
+            Thread.interrupted(); // clear interrupted status
+            workingThread = null;
+            t += System.currentTimeMillis();
+            myLog.warn(e + " after " + t + " ms for " + fileName);
+            return FT_FIELDEMPTY;
         } catch (IOException e) {
-            log.error(e);
+            myLog.error(e);
             return FT_FILEERROR;
         }
     }
+    
+    @Override
+    public final void contentStopGetValue(String fileName) {
+        myLog.warn("stopGetValue(" + fileName + ")");
+        synchronized(this) {
+            if (workingThread != null) {
+                workingThread.interrupt();
+            } else {
+                myLog.error("workingThread == null");
+            }
+        }
+    }
 
+    @Override
     public final int contentSetValue(final String fileName,
                                        final int fieldIndex,
                                        final int unitIndex,
