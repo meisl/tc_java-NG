@@ -6,6 +6,9 @@ import org.apache.commons.logging.LogFactory;
 import java.io.*;
 
 import java.util.*;
+
+import java.nio.*;
+import java.nio.file.*;
 import java.nio.channels.*;
 
 import plugins.wdx.WDXPluginAdapter;
@@ -185,6 +188,102 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             out.println(n++ + "\t" + f);
         }
     }
+    
+    public static class UncheckedIOException extends RuntimeException {
+        final IOException inner;
+        public UncheckedIOException(IOException inner) {
+            super(inner);
+            this.inner = inner;
+        }
+    }
+    
+    
+    public Iterable<ByteBuffer> contents(final String fileName) throws IOException {
+        final FileChannel channel = FileChannel.open(Paths.get(fileName), StandardOpenOption.READ);
+        return new Iterable<ByteBuffer>() {
+            boolean iteratorCalled = false;
+            public Iterator<ByteBuffer> iterator() {
+                if (iteratorCalled) {
+                    throw new IllegalStateException("iterator() may be called only once!");
+                }
+                iteratorCalled = true;
+                return new Iterator<ByteBuffer>() {
+                    
+                    ByteBuffer bufA = ByteBuffer.allocate(1024 * 1024);
+                    ByteBuffer bufB = ByteBuffer.allocate(1024 * 1024);
+                    ByteBuffer nextOut = bufA;
+                    boolean isBufAReady = false;
+                    boolean isBufBReady = false;
+                    boolean isFinished = false;
+                    
+                    private boolean fillNextOut() throws IOException {
+                        nextOut.clear();
+                        if (channel.read(nextOut) < 0) {
+                            channel.close();
+                            isFinished = true;
+                            return false;
+                        }
+                        nextOut.flip();
+                        nextOut.mark();
+                        return true;
+                    }
+                    
+                    @Override
+                    public boolean hasNext() throws UncheckedIOException {
+                        try {
+                            if (isFinished) {
+                                return false;
+                            }
+                            if (nextOut == bufA) {
+                                if (isBufAReady) {
+                                    return true;
+                                }
+                                return isBufAReady = fillNextOut();
+                            } else { // nextOut == bufB
+                                if (isBufBReady) {
+                                    return true;
+                                }
+                                return isBufBReady = fillNextOut();
+                            }
+                        } catch (IOException e) {
+                            myLog.error("contents:" + e);
+                            throw new UncheckedIOException(e);
+                        }
+                    }
+                    
+                    @Override
+                    public ByteBuffer next() {
+                        if (!hasNext()) {
+                            throw new NoSuchElementException();
+                        }
+                        if (nextOut == bufA) {
+                            nextOut = bufB;
+                            isBufAReady = false;
+                            return bufA;
+                        }
+                        nextOut = bufA;
+                        isBufBReady = false;
+                        return bufB;
+                    }
+                    
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                    
+                    @Override
+                    public void finalize() throws Throwable {
+                        channel.close(); // has no effect if already closed 
+                    }
+                };
+            }
+            
+            @Override
+            public void finalize() throws Throwable {
+                channel.close(); // has no effect if already closed 
+            }
+        };
+    }
 
     @Override
     public final int contentGetSupportedField(int fieldIndex,
@@ -253,22 +352,26 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                     workingThread = Thread.currentThread();
                 }
             }
-            Object value = field._getValue(fileName);
-            synchronized(this) {
-                if (workingThread == Thread.currentThread()) {
-                    Thread.interrupted(); // clear interrupted status
-                    workingThread = null;
+            try {
+                Object value = field._getValue(fileName);
+                synchronized(this) {
+                    if (workingThread == Thread.currentThread()) {
+                        Thread.interrupted(); // clear interrupted status
+                        workingThread = null;
+                    }
                 }
+                
+                if (t != 0) {
+                    t += System.currentTimeMillis();
+                    myLog.warn("end slow " + field.name + " after " + t + "ms: " + value + " for \"" + fileName + "\"");
+                } else {
+                    myLog.info(field.name + "=" + value);
+                }
+                fieldValue.setValue(field.type, value);
+                return field.type;
+            } catch (UncheckedIOException e) {
+                throw e.inner;
             }
-            
-            if (t != 0) {
-                t += System.currentTimeMillis();
-                myLog.warn("end slow " + field.name + " after " + t + "ms: \"" + fileName + "\"");
-            } else {
-                myLog.info(field.name + "=" + value);
-            }
-            fieldValue.setValue(field.type, value);
-            return field.type;
         } catch (AsynchronousCloseException e) {    // also catches ClosedByInterruptException
             Thread.interrupted(); // clear interrupted status
             workingThread = null;

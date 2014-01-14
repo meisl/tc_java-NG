@@ -271,29 +271,27 @@ public class NtfsStreamsJ extends ContentPlugin {
         // TODO: lock file while calculating MD5
         long lastModified = file.lastModified();
         AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
-        //FileInputStream fis = new FileInputStream(file);
-/*
-        int nread = 0;
-        while ((nread = fis.read(buffer)) != -1) {
-            md.update(buffer, 0, nread);
-        };
-        fis.close();
-*/
 
-        FileChannel in = FileChannel.open(Paths.get(fileName));
-        ByteBuffer buffer = ByteBuffer.allocate(1024 * 512);
-        int nread = 0;
         long ttlRead = 0;
         long t = -System.currentTimeMillis();
-        while ( (nread = in.read(buffer)) >= 0) {
+/*
+        FileChannel in = FileChannel.open(Paths.get(fileName));
+        ByteBuffer buffer = ByteBuffer.allocate(1024 * 512);
+        while (in.read(buffer) >= 0) {
             buffer.flip();
+            ttlRead += buffer.remaining();
             md.update(buffer);
             buffer.clear();
-            ttlRead += nread;
         };
-        t += System.currentTimeMillis();
-        log.info("time=" + (t / 1000.0) + " sec, ttlRead=" + ttlRead + ", size=" + in.size() + ", " + ((double)ttlRead * 0.00095367431640625 / t ) + " MB/sec");
         in.close();
+*/
+        for (ByteBuffer buffer: contents(fileName)) {
+            ttlRead += buffer.remaining();
+            md.update(buffer);
+        }
+
+        t += System.currentTimeMillis();
+        log.info("time=" + (t / 1000.0) + " sec, ttlRead=" + ttlRead + ", " + ((double)ttlRead * 0.00095367431640625 / t ) + " MB/sec");
         
         
         byte[] mdbytes = md.digest();
