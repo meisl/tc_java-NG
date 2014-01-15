@@ -359,6 +359,53 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         return 0;
     }
     
+    class WorkItem {
+        Thread workingThread;
+        String fileName;
+        Field<?> field;
+        int unitIndex;
+        
+        WorkItem(String fileName, Field<?> field, int unitIndex) {
+            this.workingThread = Thread.currentThread();
+            this.fileName = fileName;
+            this.field = field;
+            this.unitIndex = unitIndex;
+        }
+        
+        public void cleanup() {
+            if (this.workingThread != Thread.currentThread()) { // TODO: assert it
+                throw new IllegalStateException(this.workingThread + " != " + Thread.currentThread());
+            }
+            Thread.interrupted(); // clear interrupted status
+            removeWorkItem(this);
+        }
+    }
+    
+    private Map<String, Set<WorkItem>> fileNames2workItems = new HashMap<>();
+    
+    WorkItem addWorkItem(String fileName, Field<?> field, int unitIndex) {
+        synchronized (fileNames2workItems) {
+            WorkItem result = new WorkItem(fileName, field, unitIndex);
+            Set<WorkItem> workItems = fileNames2workItems.get(fileName);
+            if (workItems == null) {
+                workItems = new HashSet<>();
+                fileNames2workItems.put(fileName, workItems);
+            }
+            workItems.add(result);
+            return result;
+        }
+    }
+    
+    void removeWorkItem(WorkItem workItem) {
+        synchronized (fileNames2workItems) {
+            Set<WorkItem> workItems = fileNames2workItems.get(workItem.fileName);
+            workItems.remove(workItem);
+            if (workItems.isEmpty()) {
+                fileNames2workItems.remove(workItem.fileName);
+            }
+        }
+    }
+    
     Thread workingThread;
 
     @Override
@@ -375,14 +422,17 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
         Field<?> field = fields.get(fieldIndex);
         long t = 0;
+        WorkItem workItem = null;
         try {
             if (field.isDelayInOrder(fileName)) {
                 if ((flags & CONTENT_DELAYIFSLOW) != 0) {
                     myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
                     return FT_DELAYED;
                 }
+                workItem = addWorkItem(fileName, field, unitIndex);
                 myLog.warn("start slow " + field.name + ": \"" + fileName + "\"");
                 t = -System.currentTimeMillis();
+                /*
                 synchronized(this) {
                     if (workingThread != null) {
                         myLog.error("workingThread: " + workingThread + " " + fileName);
@@ -390,16 +440,21 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                     }
                     workingThread = Thread.currentThread();
                 }
+                */
             }
             try {
                 Object value = field._getValue(fileName);
+                if (workItem != null) {
+                    workItem.cleanup();
+                }
+                /*
                 synchronized(this) {
                     if (workingThread == Thread.currentThread()) {
                         Thread.interrupted(); // clear interrupted status
                         workingThread = null;
                     }
                 }
-                
+                */
                 if (t != 0) {
                     t += System.currentTimeMillis();
                     myLog.warn("end slow " + field.name + " after " + t + "ms: " + value + " for \"" + fileName + "\"");
@@ -412,20 +467,34 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 throw e.inner;
             }
         } catch (AsynchronousCloseException e) {    // also catches ClosedByInterruptException
-            Thread.interrupted(); // clear interrupted status
-            workingThread = null;
+            workItem.cleanup();
             t += System.currentTimeMillis();
             myLog.warn(e + " after " + t + " ms for " + fileName);
             return FT_FIELDEMPTY;
         } catch (IOException e) {
+            workItem.cleanup();
             myLog.error(e);
             return FT_FILEERROR;
+        } catch (Throwable e) {
+            if (workItem != null) {
+                workItem.cleanup();
+            }
+            throw e;
         }
     }
     
     @Override
     public final void contentStopGetValue(String fileName) {
         myLog.warn("stopGetValue(" + fileName + ")");
+        synchronized(fileNames2workItems) {
+            Set<WorkItem> workItems = fileNames2workItems.get(fileName);
+            if (workItems != null) {
+                for (WorkItem workItem: workItems) {
+                    workItem.workingThread.interrupt();
+                }
+            }
+        }
+        /*
         synchronized(this) {
             if (workingThread != null) {
                 workingThread.interrupt();
@@ -433,6 +502,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 myLog.error("workingThread == null");
             }
         }
+        */
     }
 
     @Override
