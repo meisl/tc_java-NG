@@ -374,24 +374,23 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             return FT_NOSUCHFIELD;
         }
         Field<?> field = fields.get(fieldIndex);
-        long t = 0;
-        WorkItem workItem = null;
+        boolean isSlow;
         try {
-            if (field.isDelayInOrder(fileName)) {
-                if ((flags & CONTENT_DELAYIFSLOW) != 0) {
-                    myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
-                    return FT_DELAYED;
-                }
-                workItem = pending.newItem(fileName, field, unitIndex);
-            }
+            isSlow = field.isDelayInOrder(fileName);
+        } catch (IOException e) {
+            myLog.error(e);
+            return FT_FILEERROR;
+        }
+        if (isSlow && ( (flags & CONTENT_DELAYIFSLOW) != 0 )) {
+            myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
+            return FT_DELAYED;
+        }
+        WorkItem workItem = pending.newItem(fileName, field, unitIndex);
+        try {
             try {
                 Object value = field._getValue(fileName);
-                if (workItem != null) {
-                    workItem.cleanup();
-                    myLog.warn("end slow " + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
-                } else {
-                    myLog.info(field.name + "=" + value);
-                }
+                workItem.cleanup();
+                myLog.warn("end " + (isSlow ? "slow " : "") + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
                 fieldValue.setValue(field.type, value);
                 return field.type;
             } catch (UncheckedIOException e) {
@@ -403,15 +402,11 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             myLog.warn(e + " after " + workItem.getTime() + " ms for " + fileName);
             return FT_FIELDEMPTY;
         } catch (IOException e) {
-            if (workItem != null) {
-                workItem.cleanup();
-            }
+            workItem.cleanup();
             myLog.error(e);
             return FT_FILEERROR;
         } catch (Throwable e) {
-            if (workItem != null) {
-                workItem.cleanup();
-            }
+            workItem.cleanup();
             throw e;
         }
     }
