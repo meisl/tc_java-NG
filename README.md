@@ -10,7 +10,7 @@ and then some links you will be going to over and over:
 * [Apache's chainsaw](http://logging.apache.org/chainsaw/download.html) (for debugging)
 
 NtfsStreamsJ itself relies on these:
-* [Ken Händel's tc_java](http://www.totalcmd.net/plugring/tc_java.html)of course
+* [Ken Händel's tc_java](http://www.totalcmd.net/plugring/tc_java.html) of course
 * [Mark Russinovich's streams.exe](http://technet.microsoft.com/de-de/sysinternals/bb897440), v1.56
 * [Frank Heyne's LADS.exe](http://www.heysoft.de/en/software/lads.php?lang=EN), v4.10
 * since Windows Vista: the built-in `dir /r` [TODO]
