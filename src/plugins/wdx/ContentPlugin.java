@@ -324,6 +324,8 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         };
     }
 
+    private WorkItem.Store pending = new WorkItem.Store();
+
     @Override
     public final int contentGetSupportedField(int fieldIndex,
                                                 StringBuffer fieldName,
@@ -358,89 +360,6 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
         return 0;
     }
-    
-    class WorkItem {
-        Thread workingThread;
-        String fileName;
-        Field<?> field;
-        int unitIndex;
-        long time;
-        
-        WorkItem(String fileName, Field<?> field, int unitIndex) {
-            this.workingThread = Thread.currentThread();
-            this.fileName = fileName;
-            this.field = field;
-            this.unitIndex = unitIndex;
-            myLog.warn("start slow " + field.name + ": \"" + fileName + "\"");
-            this.time = -System.currentTimeMillis();
-        }
-        
-        public void requestStop() {
-            this.workingThread.interrupt();
-        }
-        
-        public long getTime() {
-            return this.time >= 0 ? this.time : this.time + System.currentTimeMillis();
-        }
-        
-        public void cleanup() {
-            this.time = getTime();
-            if (this.workingThread != Thread.currentThread()) { // TODO: assert it
-                throw new IllegalStateException(this.workingThread + " != " + Thread.currentThread());
-            }
-            Thread.interrupted(); // clear interrupted status
-            removeWorkItem(this);
-        }
-    }
-    
-    private Map<String, HashSet<WorkItem>> fileNames2workItems = new HashMap<String, HashSet<WorkItem>>() {
-        public synchronized String toString() {
-            StringBuilder result = new StringBuilder();
-            for (String key: this.keySet()) {
-                Set<WorkItem> workItems = this.get(key);
-                result.append("\n")
-                    .append(workItems.size())
-                    .append(": ")
-                    .append(key);
-                for (WorkItem it: workItems) {
-                    result.append("\n    ")
-                        .append(it.field.name)
-                        .append(".")
-                        .append(it.unitIndex)
-                        .append("  ")
-                        .append(it.getTime())
-                        .append(" ms");
-                    if (it.workingThread.isInterrupted()) {
-                        result.append("  *");
-                    }
-                }
-            }
-            return result.toString();
-        }
-    };
-    
-    WorkItem addWorkItem(String fileName, Field<?> field, int unitIndex) {
-        synchronized (fileNames2workItems) {
-            WorkItem result = new WorkItem(fileName, field, unitIndex);
-            HashSet<WorkItem> workItems = fileNames2workItems.get(fileName);
-            if (workItems == null) {
-                workItems = new HashSet<>();
-                fileNames2workItems.put(fileName, workItems);
-            }
-            workItems.add(result);
-            return result;
-        }
-    }
-    
-    void removeWorkItem(WorkItem workItem) {
-        synchronized (fileNames2workItems) {
-            Set<WorkItem> workItems = fileNames2workItems.get(workItem.fileName);
-            workItems.remove(workItem);
-            if (workItems.isEmpty()) {
-                fileNames2workItems.remove(workItem.fileName);
-            }
-        }
-    }
 
     @Override
     public final int contentGetValue(String fileName,
@@ -455,24 +374,23 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             return FT_NOSUCHFIELD;
         }
         Field<?> field = fields.get(fieldIndex);
-        long t = 0;
-        WorkItem workItem = null;
+        boolean isSlow;
         try {
-            if (field.isDelayInOrder(fileName)) {
-                if ((flags & CONTENT_DELAYIFSLOW) != 0) {
-                    myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
-                    return FT_DELAYED;
-                }
-                workItem = addWorkItem(fileName, field, unitIndex);
-            }
+            isSlow = field.isDelayInOrder(fileName);
+        } catch (IOException e) {
+            myLog.error(e);
+            return FT_FILEERROR;
+        }
+        if (isSlow && ( (flags & CONTENT_DELAYIFSLOW) != 0 )) {
+            myLog.warn("delayed " + field.name + ".getValue(\"" + fileName + "\").");
+            return FT_DELAYED;
+        }
+        WorkItem workItem = pending.newItem(fileName, field, unitIndex);
+        try {
             try {
                 Object value = field._getValue(fileName);
-                if (workItem != null) {
-                    workItem.cleanup();
-                    myLog.warn("end slow " + field.name + " after " + workItem.time + "ms: " + value + " for \"" + fileName + "\"");
-                } else {
-                    myLog.info(field.name + "=" + value);
-                }
+                workItem.cleanup();
+                myLog.warn("end " + (isSlow ? "slow " : "") + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
                 fieldValue.setValue(field.type, value);
                 return field.type;
             } catch (UncheckedIOException e) {
@@ -481,34 +399,27 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             }
         } catch (AsynchronousCloseException e) {    // also catches ClosedByInterruptException
             workItem.cleanup();
-            myLog.warn(e + " after " + workItem.time + " ms for " + fileName);
+            myLog.warn(e + " after " + workItem.getTime() + " ms for " + fileName);
             return FT_FIELDEMPTY;
         } catch (IOException e) {
-            if (workItem != null) {
-                workItem.cleanup();
-            }
+            workItem.cleanup();
             myLog.error(e);
             return FT_FILEERROR;
         } catch (Throwable e) {
-            if (workItem != null) {
-                workItem.cleanup();
-            }
+            workItem.cleanup();
             throw e;
         }
     }
-    
+
     @Override
     public final void contentStopGetValue(String fileName) {
         int n = 0;
-        synchronized(fileNames2workItems) {
-            Set<WorkItem> workItems = fileNames2workItems.get(fileName);
-            if (workItems != null) {
-                for (WorkItem workItem: workItems) {
-                    workItem.requestStop();
-                    n++;
-                }
+        synchronized(pending) {
+            for (WorkItem it: pending.items(fileName)) {
+                it.requestStop();
+                n++;
             }
-            myLog.warn("stopGetValue / " + n + " workItems for \"" + fileName + "\"" + fileNames2workItems);
+            myLog.warn("stopGetValue / " + n + " workItems for \"" + fileName + "\"" + pending);
         }
     }
 
