@@ -11,7 +11,10 @@ del /S /Q bin >NUL
 mkdir dist 2>NUL
 del dist\tc-apis-NG.jar 2>NUL
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src -d bin src\*.java
+set MY_DIR=%CD%
+echo compiling tc-apis-NG in %MY_DIR%...
+
+%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src -d bin src/plugins/wdx/*.java
 IF ERRORLEVEL 1 (
   GOTO DONE
 )
@@ -28,38 +31,59 @@ IF "%1"=="test" (
   %JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%JAR_NAME% Main %2 %3 %4 %5 %6 %7 %8 %9
 )
 
+
+
 IF "%1"=="dist" (
-  del /S /Q dist\*.zip >NUL
-  mkdir dist\temp 2>NUL
+  del /S /Q "%MY_DIR%\dist\*.zip" >NUL 2>&1
+  rmdir /S /Q "%MY_DIR%\dist\temp"
 
-  set PLUGIN_NAME=NtfsStreamsJ
-  set PLUGIN_TYPE=WDX
+  cd example-plugins\
+  for /D %%i in (*) do (
+    cd %%i
+    call build.bat
+    set PLUGIN_TYPE=WDX
+    
+    echo %%i %PLUGIN_TYPE%
 
-  set JAR_NAME=%PLUGIN_NAME%.jar
-  set ZIP_NAME=%PLUGIN_NAME%.zip
+    mkdir "%MY_DIR%\dist\temp" 2>NUL
+    copy dist\* "%MY_DIR%\dist\temp\" >NUL
 
-  %JAR% cf "dist\temp\%JAR_NAME%" -C bin .
+    copy "%MY_DIR%\vendor\tc_java\rename-me.w_x" "%MY_DIR%\dist\temp\%%i.%PLUGIN_TYPE%" >NUL
+    copy "%MY_DIR%\vendor\tc_java\license.txt" "%MY_DIR%\dist\temp\" >NUL
+    copy "%MY_DIR%\vendor\tc_java\errormessages.ini" "%MY_DIR%\dist\temp\" >NUL
+    copy "%MY_DIR%\vendor\tc_java\tc_javaplugin.ini.stub" "%MY_DIR%\dist\temp\tc_javaplugin.ini" >NUL
 
-  copy vendor\tc_java\rename-me.w_x "dist\temp\%PLUGIN_NAME%.%PLUGIN_TYPE%" >NUL
-  copy vendor\tc_java\license.txt dist\temp\ >NUL
-  copy vendor\tc_java\errormessages.ini dist\temp\ >NUL
-  copy vendor\tc_java\tc_javaplugin.ini.stub dist\temp\tc_javaplugin.ini >NUL
+    echo [%PLUGIN_TYPE%]>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
+    echo CLASS=%%i>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
 
-  echo [%PLUGIN_TYPE%]>>dist\temp\tc_javaplugin.ini
-  echo CLASS=%PLUGIN_NAME%>>dist\temp\tc_javaplugin.ini
+    echo [plugininstall]>>"%MY_DIR%\dist\temp\pluginst.inf"
+    echo description=%PLUGIN_TYPE% plugin %%i>>"%MY_DIR%\dist\temp\pluginst.inf"
+    echo type=%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
+    echo file=%%i.%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
+    echo defaultdir=%%i>>"%MY_DIR%\dist\temp\pluginst.inf"
 
-  echo [plugininstall]>>dist\temp\pluginst.inf
-  echo description=%PLUGIN_TYPE% plugin %PLUGIN_NAME%>>dist\temp\pluginst.inf
-  echo type=%PLUGIN_TYPE%>>dist\temp\pluginst.inf
-  echo file=%PLUGIN_NAME%.%PLUGIN_TYPE%>>dist\temp\pluginst.inf
-  echo defaultdir=%PLUGIN_NAME%>>dist\temp\pluginst.inf
+    %JAR% cMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist\temp" .
+    %JAR% uMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist" tc-apis-NG.jar
 
-  %JAR% cMf "dist\%ZIP_NAME%" -C dist\temp .
-  %JAR% uMf "dist\%ZIP_NAME%" -C dist tc-apis-NG.jar
+    rmdir /S /Q "%MY_DIR%\dist\temp"
+    cd ..
+  )
 
-  rmdir /S /Q dist\temp
-  GOTO DONE
 
 
 )
+
+    GOTO DONE
+    
+
+
+
+
+
+
+
+
+
+
 :DONE
+cd "%MY_DIR%"

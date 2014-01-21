@@ -25,13 +25,13 @@ public class NtfsStreamsJ extends ContentPlugin {
 
     public enum Helper {
         STREAMS(
-            ".\\vendor\\streams\\streams.exe",
+            ".\\streams.exe",
             //"^\\s+:([^:]*):\\$DATA\\t(\\d+)$"
             "^\\s+:([^:]*):\\$DATA\\t(\\d+)|(([a-zA-z]:\\\\)?([^:?*|<>/]+\\\\)*([^:?*|<>/\\\\]+)):$",
             3, 1, 2
         ),
         LADS(
-            ".\\vendor\\lads\\lads.exe",
+            ".\\lads.exe",
             "^\\s*(\\d+)\\s+(.+?)\\\\?:([^:]*)$",
             2, 3, 1
         );
