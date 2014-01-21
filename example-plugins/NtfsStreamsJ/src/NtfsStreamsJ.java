@@ -247,6 +247,7 @@ public class NtfsStreamsJ extends ContentPlugin {
             } else {
                 log.warn("invalid :MD5 " + md5Contents + " on \"" + file.getPath() + "\" - not matching /" + md5ContentsPattern + "/");
             }
+            md5ADS.deleteIfExists();
         }
         return null;
     }
@@ -304,7 +305,7 @@ public class NtfsStreamsJ extends ContentPlugin {
             sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
         }
         String result = sb.toString();
-        if (file.canWrite()) {
+        if (file.canWrite() && (file.lastModified() == lastModified) && (file.length() > 32 * 1024)) {
             t = System.currentTimeMillis();
             md5ADS.createIfNotExists().setContents(result + "@" + t);
             file.setLastModified(lastModified); // reset to original
