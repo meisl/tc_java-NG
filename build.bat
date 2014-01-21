@@ -24,11 +24,17 @@ copy /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
 rmdir /S /Q bin\plugins >NUL
 
 
-IF "%1"=="test" (
+if "%1"=="test" (
   cd test
   createTestFiles.bat
   cd ..
   %JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%JAR_NAME% Main %2 %3 %4 %5 %6 %7 %8 %9
+)
+
+if "%1"=="jdoc" (
+  rmdir /S /Q "%MY_DIR%\doc\api"
+  mkdir "%MY_DIR%\doc\api" 2>NUL
+  %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src;tc-apis-1.7;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
 )
 
 if "%1"=="dist" (
