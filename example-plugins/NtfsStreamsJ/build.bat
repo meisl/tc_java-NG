@@ -12,8 +12,11 @@ set JAR=%JAVA_HOME%\bin\jar
 mkdir bin 2>NUL
 del /S /Q bin >NUL 2>&1
 mkdir dist 2>NUL
-del /S /Q dist\* >NUL 2>&1
+for %%i in (dist\*) do (
+  if NOT "%%i"=="dist\.gitignore" del /Q "%%i" >NUL 2>&1
+)
 
+echo .
 echo compiling %PLUGIN_NAME%...
 
 %JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src;src -d bin src\*.java

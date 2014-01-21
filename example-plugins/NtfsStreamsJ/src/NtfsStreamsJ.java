@@ -1,5 +1,6 @@
 
 import plugins.wdx.ContentPlugin;
+import plugins.AlternateDataStream;
 import fun.*;
 import seq.*;
 

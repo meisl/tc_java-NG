@@ -21,7 +21,7 @@ IF ERRORLEVEL 1 (
 
 copy /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
 %JAR% uf dist\tc-apis-NG.jar -C bin plugins
-rmdir /S /Q bin\plugins >NUL
+rmdir /S /Q bin\plugins >NUL 2>&1
 
 
 if "%1"=="test" (
@@ -32,14 +32,14 @@ if "%1"=="test" (
 )
 
 if "%1"=="jdoc" (
-  rmdir /S /Q "%MY_DIR%\doc\api"
+  rmdir /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
   mkdir "%MY_DIR%\doc\api" 2>NUL
   %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src;tc-apis-1.7;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
 )
 
 if "%1"=="dist" (
   del /S /Q "%MY_DIR%\dist\*.zip" >NUL 2>&1
-  rmdir /S /Q "%MY_DIR%\dist\temp"
+  rmdir /S /Q "%MY_DIR%\dist\temp" >NUL 2>&1
 
   cd example-plugins\
   for /D %%i in (*) do (
@@ -47,10 +47,12 @@ if "%1"=="dist" (
     call build.bat
     set PLUGIN_TYPE=WDX
     
-    echo %%i %PLUGIN_TYPE%
+    echo %%i %PLUGIN_TYPE% done.
+    echo .
 
     mkdir "%MY_DIR%\dist\temp" 2>NUL
     copy dist\* "%MY_DIR%\dist\temp\" >NUL
+    del /Q "%MY_DIR%\dist\temp\.gitignore" >NUL 2>&1
 
     copy "%MY_DIR%\vendor\tc_java\rename-me.w_x" "%MY_DIR%\dist\temp\%%i.%PLUGIN_TYPE%" >NUL
     copy "%MY_DIR%\vendor\tc_java\license.txt" "%MY_DIR%\dist\temp\" >NUL
@@ -69,7 +71,7 @@ if "%1"=="dist" (
     %JAR% cMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist\temp" .
     %JAR% uMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist" tc-apis-NG.jar
 
-    rmdir /S /Q "%MY_DIR%\dist\temp"
+    rmdir /S /Q "%MY_DIR%\dist\temp" >NUL 2>&1
     cd ..
   )
 
