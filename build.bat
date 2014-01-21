@@ -31,9 +31,7 @@ IF "%1"=="test" (
   %JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%JAR_NAME% Main %2 %3 %4 %5 %6 %7 %8 %9
 )
 
-
-
-IF "%1"=="dist" (
+if "%1"=="dist" (
   del /S /Q "%MY_DIR%\dist\*.zip" >NUL 2>&1
   rmdir /S /Q "%MY_DIR%\dist\temp"
 
@@ -69,21 +67,7 @@ IF "%1"=="dist" (
     cd ..
   )
 
-
-
 )
-
-    GOTO DONE
-    
-
-
-
-
-
-
-
-
-
 
 :DONE
 cd "%MY_DIR%"
