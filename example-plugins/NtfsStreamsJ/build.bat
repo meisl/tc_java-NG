@@ -23,7 +23,7 @@ echo compiling %PLUGIN_NAME%...
 IF ERRORLEVEL 1 (
   GOTO DONE
 )
-%JAVA_HOME%\bin\jar cf "dist\%PLUGIN_NAME%.jar" -C bin .
+%JAR% cf "dist\%PLUGIN_NAME%.jar" -C bin .
 copy vendor\lads\lads.exe dist\ >NUL
 copy vendor\streams\streams.exe dist\ >NUL
 

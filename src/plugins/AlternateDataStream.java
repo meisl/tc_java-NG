@@ -87,9 +87,7 @@ public class AlternateDataStream {
         this.rawName = rawName;
         // TODO: does hostFile exist?
         
-        if (this.exists()) {
-            this.length = getStreamFile().length();
-        }
+        this.length = this.exists() ? getStreamFile().length() : -1;
     }
     
     public AlternateDataStream createIfNotExists() throws IOException {
@@ -98,6 +96,15 @@ public class AlternateDataStream {
             this.length = 0;
         }
         return this;
+    }
+    
+    public int deleteIfExists() throws IOException {
+        int oldLength = this.length();
+        if (oldLength >= 0) {
+            this.getStreamFile().delete();
+            this.length = -1;
+        }
+        return oldLength;
     }
 
     public int length() {

@@ -46,7 +46,6 @@ if "%1"=="dist" (
     cd %%i
     call build.bat
     set PLUGIN_TYPE=WDX
-    
     echo %%i %PLUGIN_TYPE% done.
     echo .
 
