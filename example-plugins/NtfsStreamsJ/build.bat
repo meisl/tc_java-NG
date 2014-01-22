@@ -1,7 +1,9 @@
 @echo off
 
-set PLUGIN_NAME=NtfsStreamsJ
-set PLUGIN_TYPE=WDX
+SET PLUGIN_TYPE=WDX
+
+REM set variable PLUGIN_NAME to name of containing folder:
+CALL :SET_PLUGIN_NAME %CD%
 
 set JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
 set JAVALIB=%COMMANDER_PATH%\javalib
@@ -23,6 +25,7 @@ echo compiling %PLUGIN_NAME%...
 IF ERRORLEVEL 1 (
   GOTO DONE
 )
+
 %JAR% cf "dist\%PLUGIN_NAME%.jar" -C bin .
 copy vendor\lads\lads.exe dist\ >NUL
 copy vendor\streams\streams.exe dist\ >NUL
@@ -35,3 +38,8 @@ IF "%1"=="test" (
 )
 
 :DONE
+EXIT /b
+
+:SET_PLUGIN_NAME
+SET PLUGIN_NAME=%~n1
+EXIT /b

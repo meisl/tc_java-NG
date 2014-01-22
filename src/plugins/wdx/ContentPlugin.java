@@ -73,8 +73,12 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
             return false;
         }
 
+        public String getJavaTypeName() {
+            return javaType.getName().replace("java.lang.", "");
+        }
+
         public String toString() {
-            return javaType.getName().replace("java.lang.", "") + " " + name;
+            return getJavaTypeName() + " " + name;
         }
         
         public final void assertValidNameLength() {
@@ -451,10 +455,10 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
 
 
     public void runTests(String... fileNames) throws IOException {
-        
+        String pluginName = this.getClass().getName();
         // defines at least one field
         if (this.fields.size() < 0) {
-            throw new RuntimeException(this.getClass().getName() + " should define at least 1 field");
+            throw new RuntimeException(pluginName + " should define at least 1 field");
         }
         
         // no field name too long
@@ -465,7 +469,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         for (String fileName: fileNames) {
             for (Field<?> f: fields) {
                 Object result = f._getValue(fileName);
-                System.out.println("TEST " + f + " on \"" + fileName + "\": " + result);
+                System.out.println("TEST [" + pluginName + "." + f.name + "] on \"" + fileName + "\": " + result + " (" + f.getJavaTypeName() + ")");
             }
         }
     }

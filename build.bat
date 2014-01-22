@@ -1,4 +1,4 @@
-@echo off
+@ECHO OFF
 
 set JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
 set JAVALIB=%COMMANDER_PATH%\javalib
@@ -47,7 +47,7 @@ if "%1"=="dist" (
     call build.bat
     set PLUGIN_TYPE=WDX
     echo %%i %PLUGIN_TYPE% done.
-    echo .
+    echo(
 
     mkdir "%MY_DIR%\dist\temp" 2>NUL
     copy dist\* "%MY_DIR%\dist\temp\" >NUL
