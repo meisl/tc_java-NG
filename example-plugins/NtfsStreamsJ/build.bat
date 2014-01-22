@@ -8,7 +8,7 @@ CALL :SET_PLUGIN_NAME %CD%
 SET JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
 SET JAVALIB=%COMMANDER_PATH%\javalib
 
-SET MY_CLASS_PATH=..\..\vendor\tc_java\tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
+SET MY_CLASS_PATH=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
 SET JAR=%JAVA_HOME%\bin\jar
 
 MKDIR bin 2>NUL
@@ -21,7 +21,7 @@ FOR %%i IN (dist\*) DO (
 ECHO(
 ECHO compiling %PLUGIN_NAME%...
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src;src -implicit:none -d bin src\*.java
+%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src\java;src -implicit:none -d bin src\*.java
 IF ERRORLEVEL 1 (
   EXIT /B 1
 )
