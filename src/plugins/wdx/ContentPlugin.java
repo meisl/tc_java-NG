@@ -173,14 +173,17 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
     public Iterable<Field<?>> fields() {
         return this.fields;
     }
-    
+
     public <T> Field<T> getField(String name) {
         return (Field<T>)namesToFields.get(name);
     }
-    
-    public <T> T getValue(String fieldName, String fileName) throws IOException {
-        Field<T> field = this.<T>getField(fieldName);
+
+    public <T> T getValue(Field<T> field, String fileName) throws IOException {
         return field._getValue(fileName);
+    }
+
+    public <T> T getValue(String fieldName, String fileName) throws IOException {
+        return getValue(this.<T>getField(fieldName), fileName);
     }
 
     public void listFields() {
@@ -468,7 +471,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         
         for (String fileName: fileNames) {
             for (Field<?> f: fields) {
-                Object result = f._getValue(fileName);
+                Object result = this.getValue(f, fileName);
                 System.out.println("TEST [" + pluginName + "." + f.name + "] on \"" + fileName + "\": " + result + " (" + f.getJavaTypeName() + ")");
             }
         }
