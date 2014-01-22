@@ -17,9 +17,9 @@ FOR %%i IN (dist\*) DO (
 ECHO(
 ECHO compiling %PLUGIN_NAME%...
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src;src -d bin src\*.java
+%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src;src -implicit:none -d bin src\*.java
 IF ERRORLEVEL 1 (
-  GOTO DONE
+  EXIT /B 1
 )
 %JAR% cf "dist\%PLUGIN_NAME%.jar" -C bin .
 REM COPY vendor\whatever-else-you-need dist\ >NUL
@@ -29,8 +29,8 @@ IF "%1"=="test" (
 )
 
 :DONE
-EXIT /b
+  EXIT /B
 
 :SET_PLUGIN_NAME
-SET PLUGIN_NAME=%~n1
-EXIT /b
+  SET PLUGIN_NAME=%~n1
+  EXIT /B
