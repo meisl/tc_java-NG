@@ -1,5 +1,6 @@
 @ECHO OFF
 SET MY_DIR=%CD%
+SET TEMPLATES=%CD%\templates
 SET PLUGIN_TYPE=WDX
 
 SET PLUGIN_NAME=%1
@@ -23,17 +24,17 @@ MKDIR %PLUGIN_DIR%
 ECHO @ECHO OFF>>%PLUGIN_DIR%\build.bat
 ECHO( >>%PLUGIN_DIR%\build.bat
 ECHO SET PLUGIN_TYPE=%PLUGIN_TYPE%>>%PLUGIN_DIR%\build.bat
-TYPE templates\build.bat >>%PLUGIN_DIR%\build.bat
+TYPE %TEMPLATES%\build.bat >>%PLUGIN_DIR%\build.bat
 
 
 MKDIR %PLUGIN_DIR%\src
 
-TYPE templates\%PLUGIN_TYPE%-0.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
+TYPE %TEMPLATES%\%PLUGIN_TYPE%-0.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
 REM like ECHO but without newline:
-<NUL SET /p dummyName=%PLUGIN_NAME%>>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
-TYPE templates\%PLUGIN_TYPE%-1.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
-<NUL SET /p dummyName=%PLUGIN_NAME%>>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
-TYPE templates\%PLUGIN_TYPE%-2.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
+<NUL SET /p dummy=%PLUGIN_NAME%>>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
+TYPE %TEMPLATES%\%PLUGIN_TYPE%-1.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
+<NUL SET /p dummy=%PLUGIN_NAME%>>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
+TYPE %TEMPLATES%\%PLUGIN_TYPE%-2.java >>%PLUGIN_DIR%\src\%PLUGIN_NAME%.java
 
 MKDIR %PLUGIN_DIR%\dist
 ECHO done.
