@@ -21,7 +21,7 @@ FOR %%i IN (dist\*) DO (
 ECHO(
 ECHO compiling %PLUGIN_NAME%...
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src;src -implicit:none -d bin src\*.java
+%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath ..\..\src\java;src -implicit:none -d bin src\*.java
 IF ERRORLEVEL 1 (
   EXIT /B 1
 )

@@ -14,7 +14,7 @@ del dist\tc-apis-NG.jar 2>NUL
 set MY_DIR=%CD%
 echo compiling tc-apis-NG in %MY_DIR%...
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src -d bin src/plugins/wdx/*.java
+%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src\java -d bin src/java/plugins/wdx/*.java
 IF ERRORLEVEL 1 (
   GOTO DONE
 )
@@ -34,7 +34,7 @@ if "%1"=="test" (
 if "%1"=="jdoc" (
   rmdir /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
   mkdir "%MY_DIR%\doc\api" 2>NUL
-  %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src;tc-apis-1.7;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
+  %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
 )
 
 IF "%1"=="dist" (
@@ -52,23 +52,23 @@ IF "%1"=="dist" (
       ECHO %%i %PLUGIN_TYPE% done.
       ECHO(
 
-      mkdir "%MY_DIR%\dist\temp" 2>NUL
-      copy dist\* "%MY_DIR%\dist\temp\" >NUL
-      del /Q "%MY_DIR%\dist\temp\.gitignore" >NUL 2>&1
+      MKDIR "%MY_DIR%\dist\temp" 2>NUL
+      COPY dist\* "%MY_DIR%\dist\temp\" >NUL
+      DEL /Q "%MY_DIR%\dist\temp\.gitignore" >NUL 2>&1
 
-      copy "%MY_DIR%\vendor\tc_java\rename-me.w_x" "%MY_DIR%\dist\temp\%%i.%PLUGIN_TYPE%" >NUL
-      copy "%MY_DIR%\vendor\tc_java\license.txt" "%MY_DIR%\dist\temp\" >NUL
-      copy "%MY_DIR%\vendor\tc_java\errormessages.ini" "%MY_DIR%\dist\temp\" >NUL
-      copy "%MY_DIR%\vendor\tc_java\tc_javaplugin.ini.stub" "%MY_DIR%\dist\temp\tc_javaplugin.ini" >NUL
+      COPY "%MY_DIR%\vendor\tc_java\rename-me.w_x" "%MY_DIR%\dist\temp\%%i.%PLUGIN_TYPE%" >NUL
+      COPY "%MY_DIR%\vendor\tc_java\license.txt" "%MY_DIR%\dist\temp\" >NUL
+      COPY "%MY_DIR%\vendor\tc_java\errormessages.ini" "%MY_DIR%\dist\temp\" >NUL
+      COPY "%MY_DIR%\vendor\tc_java\tc_javaplugin.ini.stub" "%MY_DIR%\dist\temp\tc_javaplugin.ini" >NUL
 
-      echo [%PLUGIN_TYPE%]>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
-      echo CLASS=%%i>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
+      ECHO [%PLUGIN_TYPE%]>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
+      ECHO CLASS=%%i>>"%MY_DIR%\dist\temp\tc_javaplugin.ini"
 
-      echo [plugininstall]>>"%MY_DIR%\dist\temp\pluginst.inf"
-      echo description=%PLUGIN_TYPE% plugin %%i>>"%MY_DIR%\dist\temp\pluginst.inf"
-      echo type=%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
-      echo file=%%i.%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
-      echo defaultdir=%%i>>"%MY_DIR%\dist\temp\pluginst.inf"
+      ECHO [plugininstall]>>"%MY_DIR%\dist\temp\pluginst.inf"
+      ECHO description=%PLUGIN_TYPE% plugin %%i>>"%MY_DIR%\dist\temp\pluginst.inf"
+      ECHO type=%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
+      ECHO file=%%i.%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
+      ECHO defaultdir=%%i>>"%MY_DIR%\dist\temp\pluginst.inf"
 
       %JAR% cMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist\temp" .
       %JAR% uMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist" tc-apis-NG.jar
