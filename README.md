@@ -5,11 +5,12 @@
 **tc_java** enables plugins for [Total Commander](http://ghisler.com) (TC) written in **Java**. All four types are supported: Lister (WLX), File System (WFX), Content plugins (WDX) and Packer (WCX) plugins.
 
 #### Getting Started (for *users*)
-* Install the [latest Java runtime](http://www.java.com/en/download/manual.jsp) ("JRE", standard edition)
-* Download [javalib.tgz](http://www.totalcmd.net/download.php?id=tc_java) and extract into TC's installation directory (eg `C:\Progam Files\totalcmd\`) s.t. you have a sub-directory `javalib\` next to `plugins\` and `LANGUAGE\`. Now you're prepared to install the Java plugins you like:
-* Download a Java plugin of your choice (see below)
-* Safe and **open it in TC**, by double-clicking on it. This will auto-install it or auto-update an older version of it.
-* Close and restart TC (TODO: really necessary?)
+* First time only:
+    * Install the [latest Java runtime](http://www.java.com/en/download/manual.jsp) ("JRE", standard edition)
+    * Download [javalib.tgz](http://www.totalcmd.net/download.php?id=tc_java) and extract into TC's installation directory (eg `C:\Progam Files\totalcmd\`) s.t. you have a sub-directory `javalib\` next to `plugins\` and `LANGUAGE\`.
+* Now you're prepared to install Java plugins of your choice (see below)
+    * Download and **open it in TC**, by double-clicking on it. This will auto-install it or auto-update an older version of it.
+    * Close and restart TC (TODO: really necessary?)
 
 #### Plugins to try
 * [Those contained in here](https://github.com/meisl/tc_java-NG/blob/master/dist/README.md) (download from *there*, otherwise you might not get what you're expecting)
