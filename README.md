@@ -12,7 +12,7 @@
 * Close and restart TC (TODO: really necessary?)
 
 #### Plugins to try
-* `dist\` here [TODO: make easy one-click downloads]
+* [list of ready-for-download-and-install plugins](https://github.com/meisl/tc_java-NG/blob/master/README.md) contained in this repo (plz use this if you don't know github - you might not get what you're expecting otherwise)
 * [Java Plugin Examples Page](http://java.totalcmd.net/V1.7/examples.html) on totalcmd.net
 * http://crc83.blogspot.de/2013/10/gitdetails-plugin-for-total-commander.html
 * ...
