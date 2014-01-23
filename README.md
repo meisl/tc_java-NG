@@ -19,7 +19,8 @@
 * ...
 
 #### For developers
-The current status (v1.7) is full support of the TC v7 SDK API, including support for GUI creation using Swing or SWT. The interface, however, doesn't really "feel" much like Java. It's more like C, which is due to the fact that TC's API is exposed to the Java programmer more or less as is.
+Currently (v1.7), the full TC v7 SDK API is supported, including GUI creation using Swing or SWT.
+The interface, however, doesn't really "feel" much like Java. It's more like C, which is due to the fact that TC's API is exposed *as is* to the Java programmer, more or less.
 
 The next version will build on top of this basic layer and **take full advantage of  Java's features**, such as: the type system (including generics, **but made easy for the developer**), `java.nio`, threading (again: made easy), and more.
 
