@@ -1,18 +1,19 @@
 @ECHO OFF
+set MY_DIR=%CD%
 
 set JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
 set JAVALIB=%COMMANDER_PATH%\javalib
 
 set MY_CLASS_PATH=vendor\tc_java\tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
 set JAR=%JAVA_HOME%\bin\jar
+set JDOC=%JAVA_HOME%\bin\javadoc
 
 mkdir bin 2>NUL
 del /S /Q bin >NUL
 mkdir dist 2>NUL
 del dist\tc-apis-NG.jar 2>NUL
 
-set MY_DIR=%CD%
-echo compiling tc-apis-NG in %MY_DIR%...
+ECHO compiling tc-apis-NG in %MY_DIR%...
 
 %JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src\java -d bin src/java/plugins/wdx/*.java
 IF ERRORLEVEL 1 (
@@ -24,17 +25,11 @@ copy /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
 rmdir /S /Q bin\plugins >NUL 2>&1
 
 
-if "%1"=="test" (
-  cd test
-  createTestFiles.bat
-  cd ..
-  %JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%JAR_NAME% Main %2 %3 %4 %5 %6 %7 %8 %9
-)
-
-if "%1"=="jdoc" (
-  rmdir /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
-  mkdir "%MY_DIR%\doc\api" 2>NUL
-  %JAVA_HOME%\bin\javadoc -d doc\api -use -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
+IF "%1"=="jdoc" (
+  ECHO creating javadoc in doc\api\...
+  RMDIR /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
+  MKDIR "%MY_DIR%\doc\api" 2>NUL
+  %JDOC% -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar -subpackages plugins
 )
 
 IF "%1"=="dist" (
