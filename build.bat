@@ -34,7 +34,7 @@ if "%1"=="test" (
 if "%1"=="jdoc" (
   rmdir /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
   mkdir "%MY_DIR%\doc\api" 2>NUL
-  %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
+  %JAVA_HOME%\bin\javadoc -d doc\api -use -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
 )
 
 IF "%1"=="dist" (
