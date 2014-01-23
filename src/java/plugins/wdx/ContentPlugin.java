@@ -12,24 +12,27 @@ import java.nio.*;
 import java.nio.file.*;
 import java.nio.channels.*;
 
+import plugins.UncheckedIOException;
 import plugins.wdx.WDXPluginAdapter;
 import plugins.wdx.FieldValue;
 import static plugins.wdx.FieldValue.*;
 
+/** Base class for content (WDX) plugins.
+  */
 public abstract class ContentPlugin extends WDXPluginAdapter {
 
     public static final int FT_SETSUCCESS = 0; // missing in tc-apis
     
     public static abstract class Field<T> {
     
-        /* Found that (my) TotalCommander on my (my) WinXP always passes 259 as
-         * the max name length including the trailing 0 to
-         * contentGetSupportedField(..) so this is the bound to be checked in
-         * runTests().
-         * <p>
-         * Note that another check against the actual value passed to
-         * contentGetSupportedField is performed on invocation of that method.
-         */
+        /** Found that (my) TotalCommander on my (my) WinXP always passes 259 as
+          * the max name length including the trailing 0 to
+          * contentGetSupportedField(..) so this is the bound to be checked in
+          * runTests().
+          * <p>
+          * Note that another check against the actual value passed to
+          * contentGetSupportedField is performed on invocation of that method.
+          */
         public static final int MAX_NAME_LENGTH = 258;
 
         public static abstract class STRING extends Field<String> {
@@ -169,11 +172,15 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         fields.add(field);
         hasEditableFields |= field.isEditable();
     }
-    
+
+    /** Let's you iterate over all the fields {@link #define define}d in this ContentPlugin,
+      * in the order they were defined.
+      */
     public Iterable<Field<?>> fields() {
         return this.fields;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Field<T> getField(String name) {
         return (Field<T>)namesToFields.get(name);
     }
@@ -186,26 +193,23 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         return getValue(this.<T>getField(fieldName), fileName);
     }
 
+    /** Prints string representations for all fields to System.out,
+      * in the order they were {@link #define define}d.
+      */
     public void listFields() {
         listFields(System.out);
     }
 
+    /** Prints string representations for all fields to to the specified PrintStream,
+      * in the order they were {@link #define define}d.
+      */
     public void listFields(PrintStream out) {
         int n = 0;
         for (Field<?> f: fields()) {
             out.println(n++ + "\t" + f);
         }
     }
-    
-    public static class UncheckedIOException extends RuntimeException {
-        final IOException inner;
-        public UncheckedIOException(IOException inner) {
-            super(inner);
-            this.inner = inner;
-        }
-    }
-    
-    
+
     public Iterable<ByteBuffer> contents(final String fileName) throws IOException {
         final AsynchronousFileChannel channel = AsynchronousFileChannel.open(Paths.get(fileName), StandardOpenOption.READ);
         return new Iterable<ByteBuffer>() {
