@@ -54,7 +54,7 @@ Therefore it is possible now to extend the boot-classpath (required by some plug
 WHY DO YOU NEED JAVALIB, WHAT IS THE PURPOSE AND WHAT IS THE CONTENTS?
 There are some reasons for my decision:
 1. If every plugin needs a basic library to work, why duplicate it and bigger the download size?
-2. SWT is used by nearla all lister plugin and cannot be copied. This is a threading issue. Several threads
+2. SWT is used by nearly all lister plugin and cannot be copied. This is a threading issue. Several threads
 must share the same instance in the Java Virtual machine.
 3. The debug library is used by possibly every plugin and also its configuration.
 So there was a need to have a global library folder, that is in the classpath of every JavaPlugin.
@@ -86,7 +86,7 @@ You can extract them and re-compile with your changes, if you want to.
 
 I WANT MORE DOCUMENTATION OF THE JAVA PLUGIN API, WHERE IS IT?
 Please refer to
-http://java.totalcmd.net/V1.5/site/apidocs/index.html
+http://java.totalcmd.net/V1.7/site/apidocs/index.html
 It has detailed information for plugin writers:
 click on a package, for example plugins.wlx
 and read about lister plugins. You can also search the API for Java Class- / Method- and Field descriptions.
