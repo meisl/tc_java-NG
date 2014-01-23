@@ -8,13 +8,13 @@
 * **First time only:**
     * Install the [latest Java runtime](http://www.java.com/en/download/manual.jsp) ("JRE", standard edition)
     * Download [javalib.tgz](http://www.totalcmd.net/download.php?id=tc_java) and extract into TC's installation directory (eg `C:\Progam Files\totalcmd\`) s.t. you have a sub-directory `javalib\` next to `plugins\` and `LANGUAGE\`.
-* **Install Java plugins of your choice (see below) like so:**
+* **Now install the plugins of your choice, like so:**
     * Download and **open in TC**, by double-clicking on it. This will auto-install it or auto-update an older version of it.
     * Close and restart TC (TODO: really necessary?)
 
 #### Plugins to try
 * [Those contained in here](https://github.com/meisl/tc_java-NG/blob/master/dist/README.md) (download from *there*, otherwise you might not get what you're expecting)
-* [Java Plugin Examples Page](http://java.totalcmd.net/V1.7/examples.html) on totalcmd.net
+* Ken Händel's [Java Plugin Examples Page](http://java.totalcmd.net/V1.7/examples.html) on totalcmd.net
 * http://crc83.blogspot.de/2013/10/gitdetails-plugin-for-total-commander.html
 * ...
 
