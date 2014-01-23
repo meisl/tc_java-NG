@@ -38,7 +38,7 @@ IF "%1"=="jdoc" (
   MKDIR "%MY_DIR%\doc\api" 2>NUL
 
   REM TODO: make javadoc for *all* plugins in example-plugins
-  %JAVA_HOME%\bin\javadoc -d doc\api -use -sourcepath src\java;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
+  %JAVA_HOME%\bin\javadoc -d doc\api -use -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
 )
 
 IF "%1"=="dist" (

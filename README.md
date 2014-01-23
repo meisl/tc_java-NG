@@ -1,3 +1,6 @@
+Browse API docs: https://htmlpreview.github.com?https://github.com/meisl/tc_java-NG/master/doc/api/index.html
+
+
 TODO (a lot...!)
 
 ...for now let me just point you to this thread on the TotalCommander forum:
