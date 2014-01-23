@@ -1,3 +1,6 @@
+Browse API docs: https://htmlpreview.github.com?https://github.com/meisl/tc_java-NG/master/doc/api/index.html
+
+
 TODO (a lot...!)
 
 ...for now let me just point you to this thread on the TotalCommander forum:
@@ -23,10 +26,3 @@ If you're below Windows Vista or just feel like trying 'em out you need to downl
 SET JAVA_HOME=%PROGRAMFILES%\Java\jdk1.7.0_25
 SET COMMANDER_PATH=%PROGRAMFILES%\totalcmd
 ```
-
-
-Ken Händel
-kschwiersch@yahoo.de
-
-Matthias Kling (meisl)
-m.kling@sprax.eu
