@@ -1,0 +1,261 @@
+The Java Plugin Writers Guide
+=============================
+If you installed some of the examples and now know what is possible, you might have asked the following questions:
+
+HOW COMPLICATE IS IT TO WRITE YOUR OWN PLUGIN IN JAVA? The answer is "it is quite simple" for people
+who already know how to write Java programs. In Java you write a Java file, compile it, put it in an archive
+(e.g. myplugin.jar) and run it. No other steps are needed for your Java Plugin, too.
+
+AND WHAT DO I NEED? You can use complex IDEs like
+Eclipse (www.eclipse.org) or use any editor of your choice (emacs, ultraedit or even vi).
+Simply install Java Developement Kit 5.0 (JDK) and an editor of your choice and you are ready to start.
+
+DO I HAVE TO CODE IN OTHER LANGUAGES LIKE C? No, this is never needed for your plugin.
+This is realized by re-using always the same plugin file with different names and custom configuration.
+This means, that if you want to write a file system plugin "YourFileSystem", you can copy for example the file SWTDemo.wlx
+(that is a lister plugin) and rename it to YourFileSystem.wfx. This is quite easy, isnt it?
+The name is the only change to the plugin file, no matter if you want a new file system or a new lister plugin
+or a new packer plugin or a new content plugin, simply rename it. Configuration is done by editing the file
+tc_javaplugin.ini .
+
+WHAT'S THE TRICK TO USE JAVA IN TOTAL COMMANDER?
+This is realized through the Java Native Interface (JNI). All native C-Functions have their equivalent in Java.
+Each function call of Total Commander is passed to the associated Java Method. This works vice versa, too.
+Since there is an equivalent Java Method for every C plugin function, all Total Commander plugin features are supported.
+
+BUT STARTING A JAVA PROGRAM NEEDS SOME TIME, WHAT ABOUT PERFORMANCE ISSUES?
+Yes, starting Java is a time consuming process. And this is needed, because Java Programs are executed in a sandbox
+(the Java Virtual Machine). But this is done only the first time, a Java plugin is called and then every plugin
+will reuse this environment, so this is not so bad as it sounds.
+
+CAN I USE EVERY JAVA LIBRARY, WHAT ABOUT LIMITATIONS?
+Yes you can use every library in principle. Every Java program that can be started standalone, can be called
+by your Java Plugin, also. If the Java Program needs native libraries like DLLs or loads custom resources
+(like property files or images) this is no problem.
+
+WHAT ABOUT THE CLASSPATH ISSUES, WHERE DO I SET THE CLASSPATH?
+The CLASSPATH is defined in the tc_javaplugin.ini file. But it contains always a single entry:
+JAVA.CLASS.PATH=-Djava.class.path=%COMMANDER_PATH%/javalib/tc-classloader-1.1.jar
+The reason for this is, that every plugin is loaded by the Java Plugin ClassLoader. It knows implicitly where to find
+your plugin classes.
+First the javalib sub-directory of the Total Commander installation directory is searched for the libraries (JARs, DLLs).
+At this location all libraries (shared by all Java Plugins) are located. This is namely the debug libraries,
+the Standard Widget Toolkit or Java 3D.
+The second location is the plugin directory itself. All JAR file stored here are searched.
+For example:
+If you need to load resource files from the plugin directory, you can use
+"this.getClass().getClassLoader().getResource("myimage.gif")"
+for instance.
+If you want to load a resource from your plugin JAR file, you can use
+"this.getClass().getClassLoader().getResourceAsStream("tcplugins.myimage.gif")"
+Additionally to the normal classpath, there is an additional extension dir added to the JRE, that is: %COMMANDER_PATH%/javalib/lib/ext
+Therefore it is possible now to extend the boot-classpath (required by some plugins e.g JLGui)
+
+WHY DO YOU NEED JAVALIB, WHAT IS THE PURPOSE AND WHAT IS THE CONTENTS?
+There are some reasons for my decision:
+1. If every plugin needs a basic library to work, why duplicate it and bigger the download size?
+2. SWT is used by nearla all lister plugin and cannot be copied. This is a threading issue. Several threads
+must share the same instance in the Java Virtual machine.
+3. The debug library is used by possibly every plugin and also its configuration.
+So there was a need to have a global library folder, that is in the classpath of every JavaPlugin.
+
+Debug libraries and configuration:
+==================================
+commons-logging-1.0.4.jar
+commons-logging-api-1.0.4.jar
+jmds-1.0.jar
+log4j.xml
+log4j-1.2.8.jar
+log4j-zeroconf-2.0alpha-1.jar
+
+SWT as graphical user interface:
+================================
+swt-awt-win32-3139.dll
+swt-gdip-win32-3139.dll
+swt-win32-3.1.2.jar	1283237
+swt-win32-3139.dll	315392
+Java Plugin ClassLoader:
+
+ClassLoader:
+============
+tc-classloader-1.1.jar
+
+YOUR JAVA PLUGIN INTERFACE IS FREEWARE, WHAT ABOUT THE SOURCES?
+The sources are included in the JAR files beside the .class files.
+You can extract them and re-compile with your changes, if you want to.
+
+I WANT MORE DOCUMENTATION OF THE JAVA PLUGIN API, WHERE IS IT?
+Please refer to
+http://java.totalcmd.net/V1.5/site/apidocs/index.html
+It has detailed information for plugin writers:
+click on a package, for example plugins.wlx
+and read about lister plugins. You can also search the API for Java Class- / Method- and Field descriptions.
+
+AND WHAT ABOUT DOCUMENTATION OF TOTAL COMMANDER PLUGINS IN MORE GENERAL?
+Once you should start with the "hello world" example below. If you no the technique,
+you should learn about writing plugins for total commander in more general.
+The plugin types and how they work is described in the package documentation
+of the Java API in detail. The documentation is based on the Documentation
+on the ghisler.com Homepage and is very good.
+The Java API Documentation contains also general infos on how to implement plugins of a certain type,
+please follow this direct links (the overview at the bottom of these pages):
+WLX
+http://java.totalcmd.net/V1.5/site/apidocs/plugins/wlx/package-summary.html
+WFX
+http://java.totalcmd.net/V1.5/site/apidocs/plugins/wfx/package-summary.html
+WCX
+http://java.totalcmd.net/V1.5/site/apidocs/plugins/wcx/package-summary.html
+WDX
+http://java.totalcmd.net/V1.5/site/apidocs/plugins/wdx/package-summary.html
+
+===========================================================================
+===========================================================================
+===========================================================================
+
+OK ENOUGH THEORY, PROOVE HOW SIMPLE IS IT TO WRITE A NEW PLUGIN, RIGHT NOW!
+Ok, here is a hello world example, created with Total Commander:
+1.
+Create a new plugin directory with Total Commander (press F7 "HelloWorld" and enter it)
+2.
+You need some files to start with.
+I ASSUME, THAT YOU INSTALLED THE SWTDEMO EXAMPLE AND COULD START IT SUCCESSFULLY.
+
+Copy the following files from SWTDemo plugin directory to "HelloWorld":
+errormessages.ini
+license.txt
+SWTDemo.wlx
+tc_javaplugin.ini
+tc-apis-1.5.jar
+3.
+Rename the file SWTDemo.wlx to HelloWorld.wlx
+Then enter the file tc_javaplugin.ini (F4) and change the line:
+"CLASS=tcplugins.SWTDemo"
+to 
+"CLASS=HelloWorld"
+4.
+Create a new Java file "HelloWorld.java" (F4) with the following content:
+
+=============SNIP===================================
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+
+import plugins.wlx.SWTWLXPlugin;
+
+public class HelloWorld extends SWTWLXPlugin {
+
+	public String listGetDetectString(int maxLen) {
+		return "EXT=\"TST\"";
+	}
+
+	public Shell createShell() {
+		if (log.isDebugEnabled()) {
+			log.debug("BrowserExample.createShell()");
+		}
+		return new Shell(display);
+	}
+
+	public void listLoad(Shell shell, String input, int showFlags) {
+		Label lbl = new Label(shell, SWT.None);
+		lbl.setText("Hello World");
+	}
+
+	public void listCloseWindow() {
+	}
+
+}
+=============SNAP===================================
+
+5.
+Compile it with JAVAC
+This is part of the Java Developement Kit (JDK), not inlcuded in the Java Runtime Environment (JRE)
+http://java.sun.com/javase/downloads/index_jdk5.jsp
+
+Type the following commands (change the path, if needed):
+
+set JAVA_HOME=c:\Programme\Java\jdk1.5.0_05
+set JAVALIB=g:\Totalcmd\javalib
+%JAVA_HOME%\bin\javac -classpath %JAVALIB%\swt-win32-3.1.2.jar;tc-apis-1.5.jar HelloWorld.java
+%JAVA_HOME%\bin\jar cvf HelloWorld.jar HelloWorld.class
+
+6.
+Install your plugin with Total Commander.
+Click on the menu
+- Configure/Settings/Plugins/Lister Plugins (WLX)
+- Add "HelloWorld.wlx"
+- To avoid conflicts with other plugins shift it up to the first position by clicking on the arrow-up image.
+- Press OK button
+If you got error messages while these steps and must make some corrections, restart Total Commander afterwards
+and repeat these steps.
+
+7. Start your plugin
+Create a demo file called "demo.tst" (Shift F4) and open the lister window (F3)
+
+Thats it.
+
+===========================================================================
+===========================================================================
+===========================================================================
+
+I HAVE SOME HARD TO FIND ERROR, HOW CAN I DEBUG?
+Debugging is possible through debug statements.
+Start the following web-based application with your browser:
+Chainsaw v2
+http://logging.apache.org/log4j/docs/webstart/chainsaw/chainsawWebStart.jnlp
+
+Now you will see the debug messages, printed out in your Java File HelloWorld.java:
+
+=============SNIP===================================
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import plugins.wlx.SWTWLXPlugin;
+
+public class HelloWorld extends SWTWLXPlugin {
+
+	/**
+	 * the logging support.
+	 */
+	private Log log = LogFactory.getLog(HelloWorld.class);
+	
+	public String listGetDetectString(int maxLen) {
+		return "EXT=\"TST\"";
+	}
+
+	public Shell createShell() {
+		if (log.isDebugEnabled()) {
+			log.debug("BrowserExample.createShell()");
+		}
+		return new Shell(display);
+	}
+
+	public void listLoad(Shell shell, String input, int showFlags) {
+		if (log.isDebugEnabled()) {
+			log.debug("Yes, its me that is started!");
+		}
+		Label lbl = new Label(shell, SWT.None);
+		lbl.setText("Hello World");
+	}
+
+	public void listCloseWindow() {
+		if (log.isDebugEnabled()) {
+			log.debug("Ooh, too bad, i was closed!");
+		}
+	}
+
+}
+=============SNAP===================================
+Type the following commands (change the path, if needed):
+
+set JAVA_HOME=c:\Programme\Java\jdk1.5.0_05
+set JAVALIB=g:\Totalcmd\javalib
+%JAVA_HOME%\bin\javac -classpath %JAVALIB%\commons-logging-api-1.0.4.jar;%JAVALIB%\swt-win32-3.1.2.jar;tc-apis-1.5.jar HelloWorld.java
+%JAVA_HOME%\bin\jar cvf HelloWorld.jar HelloWorld.class
+
+Restart Total Commander
+Start your Plugin
+And Watch the Debug Statements in Chainsaw v2-Tool
