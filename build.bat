@@ -8,6 +8,7 @@ SET JAVALIB=%COMMANDER_PATH%\javalib
 
 SET MY_CLASS_PATH=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
 SET JAR=%JAVA_HOME%\bin\jar
+set JDOC=%JAVA_HOME%\bin\javadoc
 
 MKDIR bin 2>NUL
 DEL /S /Q bin >NUL
@@ -25,25 +26,17 @@ IF ERRORLEVEL 1 (
 
 rem RMDIR /S /Q bin\plugins >NUL 2>&1
 
-
-IF "%1"=="test" (
-  CD test
-  createTestFiles.bat
-  CD ..
-  %JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%JAR_NAME% Main %2 %3 %4 %5 %6 %7 %8 %9
-)
-
 IF "%1"=="jdoc" (
+  ECHO creating javadoc in doc\api\...
   RMDIR /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
   MKDIR "%MY_DIR%\doc\api" 2>NUL
-
-  REM TODO: make javadoc for *all* plugins in example-plugins
-  %JAVA_HOME%\bin\javadoc -d doc\api -use -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;example-plugins\NtfsStreamsJ\src example-plugins\NtfsStreamsJ\src\*.java -subpackages plugins
+  %JDOC% -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java -subpackages plugins
 )
 
 IF "%1"=="dist" (
   DEL /S /Q "%DIST%\*.zip" >NUL 2>&1
   RMDIR /S /Q "%DIST%\temp" >NUL 2>&1
+  COPY /Y templates\dist-README-0.md "%MY_DIR%\dist\README.md" >NUL
 
   CD example-plugins\
   FOR /D %%i in (*) do (
@@ -55,6 +48,9 @@ IF "%1"=="dist" (
       SET PLUGIN_TYPE=WDX
       ECHO %%i %PLUGIN_TYPE% done.
       ECHO(
+
+      REM note the ^( and ^), they're escapes
+      ECHO * [%%i]^(http://github.com/meisl/tc_java-NG/blob/master/dist/%%i.zip?raw=true^), %PLUGIN_TYPE%: TODO: description>>"%MY_DIR%\dist\README.md"
 
       MKDIR "%DIST%\temp" 2>NUL
       REM everything from plugin's dist\ into our %DIST%\temp\:
@@ -82,6 +78,7 @@ IF "%1"=="dist" (
     )
     CD ..
   )
+  TYPE "%MY_DIR%\templates\dist-README-1.md" >>"%MY_DIR%\dist\README.md"
 
 )
 
