@@ -25,13 +25,14 @@ public abstract class SwingWLXPlugin extends WLXPluginAdapter {
 	{
 		// initialize support for popup menu (copy/paste)
 		Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-				new PopupMenuEventQueue());
+			new PopupMenuEventQueue()
+		);
 	}
 
 	/**
 	 * Frames of the parent window handle. (key= window handle HWND).
 	 */
-	private static Hashtable < Integer, JFrame > frames = new Hashtable < Integer, JFrame >();
+	private static Hashtable <Integer, JFrame> frames = new Hashtable <>();
 
 	/**
 	 * Flag to set the lister window size according to getWidth() and
@@ -70,7 +71,7 @@ public abstract class SwingWLXPlugin extends WLXPluginAdapter {
 		int listWin = getHWND2(jframe);
 		synchronized (frames) {
 			// store JFrame identified by HWND
-			frames.put(new Integer(listWin), jframe);
+			frames.put(listWin, jframe);
 			// use seperate thread to call listLoad (it could last a while)
 			SwingUtilities.invokeLater(new Runnable() {
 
@@ -105,9 +106,9 @@ public abstract class SwingWLXPlugin extends WLXPluginAdapter {
 	public final void listCloseWindow(final int listWin) {
 		synchronized (frames) {
 			// get JFrame identified by HWND
-			final JFrame jframe = (JFrame) frames.get(new Integer(listWin));
+			final JFrame jframe = frames.get(listWin);
 			// remove stored JFrame instance, it is no longer used
-			frames.remove(jframe);
+			frames.remove(listWin);
 			// use seperate thread to call listClose (it could last a while)
 			SwingUtilities.invokeLater(new Runnable() {
 
