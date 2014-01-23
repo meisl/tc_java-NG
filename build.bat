@@ -20,9 +20,9 @@ IF ERRORLEVEL 1 (
   GOTO DONE
 )
 
-copy /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
+COPY /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
 %JAR% uf dist\tc-apis-NG.jar -C bin plugins
-rmdir /S /Q bin\plugins >NUL 2>&1
+RMDIR /S /Q bin\plugins >NUL 2>&1
 
 
 IF "%1"=="jdoc" (
@@ -35,6 +35,7 @@ IF "%1"=="jdoc" (
 IF "%1"=="dist" (
   DEL /S /Q "%MY_DIR%\dist\*.zip" >NUL 2>&1
   RMDIR /S /Q "%MY_DIR%\dist\temp" >NUL 2>&1
+  COPY /Y templates\dist-README-0.md "%MY_DIR%\dist\README.md" >NUL
 
   CD example-plugins\
   FOR /D %%i in (*) do (
@@ -46,6 +47,9 @@ IF "%1"=="dist" (
       SET PLUGIN_TYPE=WDX
       ECHO %%i %PLUGIN_TYPE% done.
       ECHO(
+
+      REM note the ^( and ^), they're escapes
+      ECHO * [%%i]^(http://github.com/meisl/tc_java-NG/blob/master/dist/%%i.zip?raw=true^), %PLUGIN_TYPE%: TODO: description>>"%MY_DIR%\dist\README.md"
 
       MKDIR "%MY_DIR%\dist\temp" 2>NUL
       COPY dist\* "%MY_DIR%\dist\temp\" >NUL
@@ -72,6 +76,7 @@ IF "%1"=="dist" (
     )
     CD ..
   )
+  TYPE "%MY_DIR%\templates\dist-README-1.md" >>"%MY_DIR%\dist\README.md"
 
 )
 
