@@ -5,11 +5,11 @@
 **tc_java** enables plugins for [Total Commander](http://ghisler.com) (TC) written in **Java**. All four types are supported: Lister (WLX), File System (WFX), Content plugins (WDX) and Packer (WCX) plugins.
 
 #### Getting Started (for *users*)
-* First time only:
+* **First time only:**
     * Install the [latest Java runtime](http://www.java.com/en/download/manual.jsp) ("JRE", standard edition)
     * Download [javalib.tgz](http://www.totalcmd.net/download.php?id=tc_java) and extract into TC's installation directory (eg `C:\Progam Files\totalcmd\`) s.t. you have a sub-directory `javalib\` next to `plugins\` and `LANGUAGE\`.
-* Install Java plugins of your choice (see below) like so:
-    * Download and **open it in TC**, by double-clicking on it. This will auto-install it or auto-update an older version of it.
+* **Install Java plugins of your choice (see below) like so:**
+    * Download and **open in TC**, by double-clicking on it. This will auto-install it or auto-update an older version of it.
     * Close and restart TC (TODO: really necessary?)
 
 #### Plugins to try
