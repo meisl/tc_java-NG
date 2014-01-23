@@ -28,7 +28,7 @@ public abstract class SWTWLXPlugin extends WLXPluginAdapter {
 	/**
 	 * Store shell of the parent window handle.
 	 */
-	private static Hashtable shells = new Hashtable();
+	private static Hashtable<Integer, Shell> shells = new Hashtable<>();
 
 	/**
 	 * Parameter count of procedure windowProc.
@@ -103,7 +103,7 @@ public abstract class SWTWLXPlugin extends WLXPluginAdapter {
 					}
 				});
 				synchronized (shells) {
-					shells.put(new Integer(shell.handle), shell);
+					shells.put(shell.handle, shell);
 				}
 				try {
 					listLoad(shell, input, showFlags);
@@ -140,8 +140,8 @@ public abstract class SWTWLXPlugin extends WLXPluginAdapter {
 	public final void listCloseWindow(final int listWin) {
 		listCloseWindow();
 		synchronized (shells) {
-			Shell shell = (Shell) shells.get(listWin);
-			shells.remove(shell);
+			Shell shell = shells.get(listWin);
+			shells.remove(listWin);
 			shell.dispose();
 		}
 	}
