@@ -4,7 +4,7 @@
 -->
 #### Contents of `dist\`
 ##### Plugins
-* [NtfsStreamsJ](http://github.com/meisl/tc_java-NG/blob/master/dist/NtfsStreamsJ.zip?raw=true), WDX: TODO: description
+* [NtfsStreamsJ.WDX](http://github.com/meisl/tc_java-NG/blob/master/dist/NtfsStreamsJ.WDX.zip?raw=true): TODO: description
 
 ##### For developers
 * javalib.tgz (TODO): to be put under TC's installation folder, eg `%PROGRAMFILES%\totalcmd`
