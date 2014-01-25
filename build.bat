@@ -26,23 +26,33 @@ SET ROOT=%ROOT:~0,-1%
 
 SET SRC=%ROOT%\src\java
 SET BIN=%ROOT%\bin
+SET SCRATCH=%ROOT%\scratch
 SET DIST=%ROOT%\dist
 SET JDOC=%ROOT%\doc\api
 SET TEMP=%ROOT%\dist\temp
 SET TEMPLATES=%ROOT%\templates
 SET TC_API=%ROOT%\vendor\tc_java\tc-apis-1.7.jar
 
-SET MY_DIR=%ROOT%
-
-SET MY_CP=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
-
-MKDIR "%BIN%" 2>NUL
-DEL /S /Q "%BIN%" >NUL
+ECHO compiling tc-apis-NG...
+CALL :MAKE_CLEAN_SCRATCH
 MKDIR "%DIST%" 2>NUL
 DEL "%DIST%\tc-apis-NG.jar" 2>NUL
 
-ECHO compiling tc-apis-NG...
-javac -Xlint -cp %MY_CP% -sourcepath "%SRC%";"%TC_API%" -d "%BIN%" "%SRC%"\plugins\*.java "%SRC%"\plugins\wdx\*.java
+DIR /S /B "%SRC%\*.java" >>"%SCRATCH%\classes"
+
+rem ECHO @classes:
+rem TYPE "%SCRATCH%\classes"
+
+SET MY_CP="%JAVALIB%\swt-win32-3.1.2.jar";"%JAVALIB%\commons-logging-api-1.0.4.jar"
+rem ECHO -Xlint>"%SCRATCH%\options"
+rem ECHO -cp %MY_CP% @"%SCRATCH\options">>"%SCRATCH%\options"
+rem ECHO -sourcepath "%SRC%";"%TC_API%">>"%SCRATCH%\options"
+rem ECHO -d "%BIN%">>"%SCRATCH%\options"
+
+rem ECHO @options:
+rem TYPE "%SCRATCH%\options"
+
+javac -Xlint -cp %MY_CP% -sourcepath "%SRC%";"%TC_API%" -d "%BIN%" @"%SCRATCH%\classes"
 IF ERRORLEVEL 1 (
   ECHO tc-apis-NG failed!
   ECHO.
@@ -85,11 +95,24 @@ IF "%1"=="dist" (
 
 
 :DONE
+  CALL :DELETE_SCRATCH
   ENDLOCAL & EXIT /B 0
 
 
 :FAULT
+  CALL :DELETE_SCRATCH
   ENDLOCAL & EXIT /B 1
+
+
+:MAKE_CLEAN_SCRATCH
+  CALL :DELETE_SCRATCH
+  MKDIR %SCRATCH%
+  EXIT /B 0
+
+
+:DELETE_SCRATCH
+  RMDIR /S /Q "%SCRATCH%" >NUL 2>&1
+  EXIT /B 0
 
 
 :MAKE_DIST
@@ -121,10 +144,10 @@ IF "%1"=="dist" (
   COPY "%PLUGIN_PATH%\dist\*" "%TEMP%\" >NUL
   DEL /Q "%TEMP%\.gitignore" >NUL 2>&1
 
-  COPY "%MY_DIR%\vendor\tc_java\rename-me.w_x" "%TEMP%\%PLUGIN_DIR%" >NUL
-  COPY "%MY_DIR%\vendor\tc_java\license.txt" "%TEMP%\" >NUL
-  COPY "%MY_DIR%\vendor\tc_java\errormessages.ini" "%TEMP%\" >NUL
-  COPY "%MY_DIR%\vendor\tc_java\tc_javaplugin.ini.stub" "%TEMP%\tc_javaplugin.ini" >NUL
+  COPY "%ROOT%\vendor\tc_java\rename-me.w_x" "%TEMP%\%PLUGIN_DIR%" >NUL
+  COPY "%ROOT%\vendor\tc_java\license.txt" "%TEMP%\" >NUL
+  COPY "%ROOT%\vendor\tc_java\errormessages.ini" "%TEMP%\" >NUL
+  COPY "%ROOT%\vendor\tc_java\tc_javaplugin.ini.stub" "%TEMP%\tc_javaplugin.ini" >NUL
 
   ECHO [%PLUGIN_TYPE%]>>"%TEMP%\tc_javaplugin.ini"
   ECHO CLASS=%PLUGIN_NAME%>>"%TEMP%\tc_javaplugin.ini"
