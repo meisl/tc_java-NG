@@ -26,7 +26,7 @@ CD %PLUGIN_DIR%
 CALL build.bat
 
 CD "%MY_DIR%"
-%JAVA_HOME%\bin\java -cp %MY_CLASS_PATH%;%TC_API%;%PLUGIN_JAR% %2 %3 %4 %5 %6 %7 %8 %9
+java -cp %MY_CLASS_PATH%;%TC_API%;%PLUGIN_JAR% %2 %3 %4 %5 %6 %7 %8 %9
 
 :DONE
 CD "%MY_DIR%"

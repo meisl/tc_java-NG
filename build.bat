@@ -1,27 +1,33 @@
 @ECHO OFF
+
+CALL :FIND_JAVA_AND_TC
+IF ERRORLEVEL 1 (
+  EXIT /B 1
+)
+IF "%1"=="init" (
+  EXIT /B 0
+)
+
+
 set MY_DIR=%CD%
 
-set JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
-set JAVALIB=%COMMANDER_PATH%\javalib
-
 set MY_CLASS_PATH=vendor\tc_java\tc-apis-1.7.jar;%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
-set JAR=%JAVA_HOME%\bin\jar
-set JDOC=%JAVA_HOME%\bin\javadoc
 
 mkdir bin 2>NUL
 del /S /Q bin >NUL
 mkdir dist 2>NUL
 del dist\tc-apis-NG.jar 2>NUL
 
-ECHO compiling tc-apis-NG in %MY_DIR%...
+ECHO compiling tc-apis-NG...
 
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src\java -d bin src/java/plugins/wdx/*.java
+javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src\java -d bin src/java/plugins/wdx/*.java
 IF ERRORLEVEL 1 (
+  ECHO tc-apis-NG failed!
   GOTO DONE
 )
 
 COPY /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
-%JAR% uf dist\tc-apis-NG.jar -C bin plugins
+jar uf dist\tc-apis-NG.jar -C bin plugins
 RMDIR /S /Q bin\plugins >NUL 2>&1
 
 
@@ -29,7 +35,7 @@ IF "%1"=="jdoc" (
   ECHO creating javadoc in doc\api\...
   RMDIR /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
   MKDIR "%MY_DIR%\doc\api" 2>NUL
-  %JDOC% -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar -subpackages plugins
+  javadoc -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar -subpackages plugins
 )
 
 IF "%1"=="dist" (
@@ -69,8 +75,8 @@ IF "%1"=="dist" (
       ECHO file=%%i.%PLUGIN_TYPE%>>"%MY_DIR%\dist\temp\pluginst.inf"
       ECHO defaultdir=%%i>>"%MY_DIR%\dist\temp\pluginst.inf"
 
-      %JAR% cMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist\temp" .
-      %JAR% uMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist" tc-apis-NG.jar
+      jar cMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist\temp" .
+      jar uMf "%MY_DIR%\dist\%%i.zip" -C "%MY_DIR%\dist" tc-apis-NG.jar
 
       RMDIR /S /Q "%MY_DIR%\dist\temp" >NUL 2>&1
     )
@@ -82,3 +88,49 @@ IF "%1"=="dist" (
 
 :DONE
 CD "%MY_DIR%"
+EXIT /B 0
+
+
+:FIND_JAVA_AND_TC
+  REM first check if javac is on the PATH:
+  FOR /F %%i IN ("javac.exe") DO (
+    IF NOT "%%~$PATH:i"=="" (
+      GOTO FIND_JAVA_AND_TC_FOUNDJAVA
+    )
+  )
+
+  IF NOT EXIST "%JAVA_HOME%\bin\javac*" (
+    FOR /D %%i IN (%PROGRAMFILES%\java\*) DO (
+      IF EXIST "%%i\bin\javac*" (
+        PATH %%i\bin;%PATH%
+        GOTO FIND_JAVA_AND_TC_FOUNDJAVA
+      )
+    )
+    ECHO could not find JDK in "%PROGRAMFILES%\java\"!
+    EXIT /B 1
+  )
+
+:FIND_JAVA_AND_TC_FOUNDJAVA
+  IF NOT EXIST "%COMMANDER_PATH%\plugins\" (
+    FOR /D %%i IN (%PROGRAMFILES%\*) DO (
+      IF "%%i"=="%PROGRAMFILES%\totalcmd" (
+        IF EXIST "%PROGRAMFILES%\totalcmd\plugins\" (
+          SET COMMANDER_PATH=%%i
+          GOTO FIND_JAVA_AND_TC_FOUNDTC
+        )
+      )
+    )
+    ECHO could not find TC in "%PROGRAMFILES%\"!
+    ECHO please open command prompt *from within TC*
+    EXIT /B 1
+  )
+
+:FIND_JAVA_AND_TC_FOUNDTC
+  SET JAVALIB=%COMMANDER_PATH%\javalib
+  IF NOT EXIST "%JAVALIB%" (
+    ECHO missing "%JAVALIB%\"!
+    ECHO please extract javalib.tgz to "%JAVALIB%\"
+    EXIT /B 1
+  )
+ 
+  EXIT /B 0
