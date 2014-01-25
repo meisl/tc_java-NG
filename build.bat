@@ -27,38 +27,39 @@ SET ROOT=%ROOT:~0,-1%
 SET SRC=%ROOT%\src\java
 SET BIN=%ROOT%\bin
 SET DIST=%ROOT%\dist
+SET JDOC=%ROOT%\doc\api
 SET TEMP=%ROOT%\dist\temp
 SET TEMPLATES=%ROOT%\templates
 SET TC_API=%ROOT%\vendor\tc_java\tc-apis-1.7.jar
 
 SET MY_DIR=%ROOT%
 
-set MY_CLASS_PATH=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
+SET MY_CP=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
 
-mkdir bin 2>NUL
-del /S /Q bin >NUL
-mkdir dist 2>NUL
-del dist\tc-apis-NG.jar 2>NUL
+MKDIR "%BIN%" 2>NUL
+DEL /S /Q "%BIN%" >NUL
+MKDIR "%DIST%" 2>NUL
+DEL "%DIST%\tc-apis-NG.jar" 2>NUL
 
 ECHO compiling tc-apis-NG...
-javac -Xlint -cp %MY_CLASS_PATH% -sourcepath "%SRC%";"%TC_API%" -d "%BIN%" "%SRC%"\plugins\*.java "%SRC%"\plugins\wdx\*.java
+javac -Xlint -cp %MY_CP% -sourcepath "%SRC%";"%TC_API%" -d "%BIN%" "%SRC%"\plugins\*.java "%SRC%"\plugins\wdx\*.java
 IF ERRORLEVEL 1 (
   ECHO tc-apis-NG failed!
   ECHO.
   GOTO FAULT
 )
 
-COPY /Y vendor\tc_java\tc-apis-1.7.jar dist\tc-apis-NG.jar >NUL
-jar uf dist\tc-apis-NG.jar -C bin plugins
+COPY /Y "%TC_API%" "%DIST%\tc-apis-NG.jar" >NUL
+jar uf "%DIST%\tc-apis-NG.jar" -C "%BIN%" .
 ECHO tc-apis-NG done.
 ECHO.
 
 
 IF "%1"=="jdoc" (
-  ECHO creating javadoc in doc\api\...
-  RMDIR /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
-  MKDIR "%MY_DIR%\doc\api" 2>NUL
-  javadoc -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java;vendor\tc_java\tc-apis-1.7.jar -subpackages plugins
+  ECHO creating javadoc in "%JDOC%\"...
+  RMDIR /S /Q "%JDOC%" >NUL 2>&1
+  MKDIR "%JDOC%" 2>NUL
+  javadoc -d "%JDOC%" -quiet -classpath "%MY_CP%" -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath "%SRC%";"%TC_API%" -subpackages plugins
 )
 
 IF "%1"=="dist" (
