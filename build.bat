@@ -40,19 +40,19 @@ DEL "%DIST%\tc-apis-NG.jar" 2>NUL
 
 DIR /S /B "%SRC%\*.java" >>"%SCRATCH%\classes"
 
-rem ECHO @classes:
-rem TYPE "%SCRATCH%\classes"
+REM ECHO @classes:
+REM TYPE "%SCRATCH%\classes"
 
-SET MY_CP="%JAVALIB%\swt-win32-3.1.2.jar";"%JAVALIB%\commons-logging-api-1.0.4.jar"
-rem ECHO -Xlint>"%SCRATCH%\options"
-rem ECHO -cp %MY_CP% @"%SCRATCH\options">>"%SCRATCH%\options"
-rem ECHO -sourcepath "%SRC%";"%TC_API%">>"%SCRATCH%\options"
-rem ECHO -d "%BIN%">>"%SCRATCH%\options"
+SET MY_CP="%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar"
+ECHO -Xlint>"%SCRATCH%\options"
+ECHO -cp %MY_CP:\=/%>>"%SCRATCH%\options"
+ECHO -sourcepath "%TC_API:\=/%">>"%SCRATCH%\options"
+ECHO -d "%BIN:\=/%">>"%SCRATCH%\options"
 
-rem ECHO @options:
-rem TYPE "%SCRATCH%\options"
+REM ECHO @options:
+REM TYPE "%SCRATCH%\options"
 
-javac -Xlint -cp %MY_CP% -sourcepath "%SRC%";"%TC_API%" -d "%BIN%" @"%SCRATCH%\classes"
+javac @"%SCRATCH%\options" @"%SCRATCH%\classes"
 IF ERRORLEVEL 1 (
   ECHO tc-apis-NG failed!
   ECHO.

@@ -35,12 +35,10 @@ IF ERRORLEVEL 1 (
 
 SET MY_CP="%JAR_NAME%";"%TC_API%";"%JAVALIB%\swt-win32-3.1.2.jar";"%JAVALIB%\commons-logging-api-1.0.4.jar"
 
-SHIFT
-
 ECHO.
-ECHO running %*
+ECHO running %1/%2 %3 %4 %5 %6 %7 %8 %9
 
-java -cp %MY_CP%; %*
+java -cp %MY_CP% %2 %3 %4 %5 %6 %7 %8 %9
 IF ERRORLEVEL 1 (
   GOTO FAULT
 )
