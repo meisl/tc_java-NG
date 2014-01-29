@@ -127,6 +127,16 @@ public class Hashes extends ContentPlugin {
             }
         });
 
+        define(new Field.STRING("MD5x") {
+            public String getValue(String fileName) throws IOException {
+                Hash.Instance h = Hash.MD5.instance();
+                for (ByteBuffer buffer: contents(fileName)) {
+                    h.update(buffer);
+                }
+                return h.getValueAsHex();
+            }
+        });
+
         define(new Field.STRING("MD5") {
             public boolean isDelayInOrder(String fileName) throws IOException {
                 File file = new File(fileName);

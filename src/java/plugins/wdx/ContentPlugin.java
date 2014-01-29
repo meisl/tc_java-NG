@@ -221,7 +221,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 iteratorCalled = true;
                 return new Iterator<ByteBuffer>() {
                     
-                    ByteBuffer bufA = ByteBuffer.allocate(1024 * 128);  // ~2x cluster size seems optimal
+                    ByteBuffer bufA = ByteBuffer.allocateDirect(1024 * 128);  // ~2x cluster size seems optimal
                     Future<Integer> bufAFuture = null;
                     boolean isBufAReady = false;
 

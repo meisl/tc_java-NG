@@ -59,15 +59,27 @@ public enum Hash {
 
         public Instance instance(final Hash hash) {
             return new Instance(hash) {
-                Checksum cs = checksumInstance();
+                private Checksum cs = checksumInstance();
+                private byte[] byteArray = null;
 
                 void update(ByteBuffer buf) {
-                    if (!buf.hasArray()) {
-                        throw new RuntimeException();
+                    if (buf.hasArray()) {
+                        byte[] byteArray = buf.array();
+                        cs.update(byteArray, buf.arrayOffset(), buf.remaining());
+                        buf.position(buf.limit());
+                    } else {
+                        if (this.byteArray == null) {
+                            this.byteArray = new byte[buf.capacity()];
+                        }
+                        while (buf.remaining() >= this.byteArray.length) {
+                            buf.get(this.byteArray);
+                        }
+                        int n = buf.remaining();
+                        if (n > 0) {
+                            buf.get(this.byteArray, 0, n);
+                            cs.update(this.byteArray, 0, n);
+                        }
                     }
-                    byte[] byteArray = buf.array();
-                    cs.update(byteArray, buf.arrayOffset(), buf.remaining());
-                    buf.position(buf.limit());
                 }
 
                 public byte[] getValue() {
