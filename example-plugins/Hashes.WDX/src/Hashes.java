@@ -42,6 +42,8 @@ public class Hashes extends ContentPlugin {
         }
         return null;
     }
+
+
     public String getMD5(String fileName) throws IOException {
         File file = new File(fileName);
         if (file.isDirectory()) {
@@ -104,6 +106,26 @@ public class Hashes extends ContentPlugin {
 
 
     protected void initFields() {
+
+        define(new Field.STRING("CRC32") {
+            public String getValue(String fileName) throws IOException {
+                Hash.Instance h = Hash.CRC32.instance();
+                for (ByteBuffer buffer: contents(fileName)) {
+                    h.update(buffer);
+                }
+                return h.getValueAsHex();
+            }
+        });
+
+        define(new Field.STRING("Adler32") {
+            public String getValue(String fileName) throws IOException {
+                Hash.Instance h = Hash.Adler32.instance();
+                for (ByteBuffer buffer: contents(fileName)) {
+                    h.update(buffer);
+                }
+                return h.getValueAsHex();
+            }
+        });
 
         define(new Field.STRING("MD5") {
             public boolean isDelayInOrder(String fileName) throws IOException {
