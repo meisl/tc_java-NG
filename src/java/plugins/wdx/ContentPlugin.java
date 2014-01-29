@@ -221,7 +221,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 iteratorCalled = true;
                 return new Iterator<ByteBuffer>() {
                     
-                    ByteBuffer bufA = ByteBuffer.allocateDirect(1024 * 128);  // ~2x cluster size seems optimal
+                    ByteBuffer bufA = ByteBuffer.allocate(1024 * 128);  // ~2x cluster size seems optimal
                     Future<Integer> bufAFuture = null;
                     boolean isBufAReady = false;
 
@@ -474,9 +474,17 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         }
         
         for (String fileName: fileNames) {
+            Path path = Paths.get(fileName);
+            long size = Files.size(path);
             for (Field<?> f: fields) {
+                long t = -System.currentTimeMillis();
                 Object result = this.getValue(f, fileName);
-                System.out.println("TEST [" + pluginName + "." + f.name + "] on \"" + fileName + "\": " + result + " (" + f.getJavaTypeName() + ")");
+                t += System.currentTimeMillis();
+                double throughput = Math.round(size / ( (1 << 20) / 1e4 ) / t) / 10.0; // MB/sec
+                System.out.println("TEST [" + pluginName + "." + f.name + "] on \"" + fileName + "\": "
+                    + result + " (" + f.getJavaTypeName() + ")"
+                    + " " + throughput + " MB/sec"
+                );
             }
         }
     }

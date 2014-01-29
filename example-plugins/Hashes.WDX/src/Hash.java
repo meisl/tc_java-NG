@@ -12,7 +12,12 @@ public enum Hash {
     CRC32("CRC32", 32, new ChecksumFactory() { Checksum checksumInstance() { return new java.util.zip.CRC32(); } }),
     Adler32("Adler32", 32, new ChecksumFactory() { Checksum checksumInstance() { return new java.util.zip.Adler32(); } }),
     MD2("MD2", 128, new MessageDigestFactory()),
-    MD5("MD5", 128, new MessageDigestFactory());
+    MD5("MD5", 128, new MessageDigestFactory()),
+    SHA1("SHA1", 160, new MessageDigestFactory()),
+    SHA256("SHA-256", 256, new MessageDigestFactory()),
+    SHA384("SHA-384", 384, new MessageDigestFactory()),
+    SHA512("SHA-512", 512, new MessageDigestFactory());
+
 
     public static abstract class Instance {
 
