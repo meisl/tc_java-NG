@@ -5,7 +5,6 @@ import java.nio.*;
 import java.nio.file.*;
 
 import java.util.regex.*;
-import java.security.*;
 
 import plugins.*;
 import plugins.wdx.ContentPlugin;
@@ -13,92 +12,68 @@ import plugins.wdx.ContentPlugin;
 
 public class Hashes extends ContentPlugin {
 
-    private final Pattern md5ContentsPattern = Pattern.compile("^([0-9a-fA-F]{32})@([0-9]+)$");
+    private final Pattern hashContentsPattern = Pattern.compile("^([0-9a-fA-F]+)@([0-9]+)$");
 
-    public String getMD5fromStream(File file) throws IOException {
+    public String getHashFromStream(Hash hash, File file) throws IOException {
         if (file.isDirectory()) {
             return null;
         }
         long lastModified = file.lastModified();
-        AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
-        if (md5ADS.exists()) {
-            String md5Contents = md5ADS.getContents();
+        AlternateDataStream hashADS = new AlternateDataStream(file, "Hash." + hash.name());
+        if (hashADS.exists()) {
+            String hashContents = hashADS.getContents();
             long time;
             // TODO: make regex match thread safe
-            Matcher matcher = md5ContentsPattern.matcher(md5Contents);
+            Matcher matcher = hashContentsPattern.matcher(hashContents);
             if (matcher.matches()) {
-                String md5Str = matcher.group(1);
-                String timeStr = matcher.group(2);
-                time = Long.parseLong(timeStr, 10);
-                if (lastModified <= time) {
-                    return md5Str;
-                } else {
-                    log.warn("invalid :MD5 " + md5Contents + " on \"" + file.getPath() + "\" - outdated by " + (lastModified - time) + " ms");
+                String hashStr = matcher.group(1);
+                if (hashStr.length() == hash.bitLength() / 4) {
+                    String timeStr = matcher.group(2);
+                    time = Long.parseLong(timeStr, 10);
+                    if (lastModified <= time) {
+                        return hashStr;
+                    } else {
+                        log.warn("invalid :Hash." + hash.name() + " " + hashContents + " on \"" + file.getPath() + "\" - outdated by " + (lastModified - time) + " ms");
+                    }
                 }
             } else {
-                log.warn("invalid :MD5 " + md5Contents + " on \"" + file.getPath() + "\" - not matching /" + md5ContentsPattern + "/");
+                log.warn("invalid :Hash." + hash.name() + " " + hashContents + " on \"" + file.getPath() + "\" - not matching /" + hashContentsPattern + "/");
             }
-            md5ADS.deleteIfExists();
+            hashADS.deleteIfExists();
         }
         return null;
     }
 
 
-    public String getMD5(String fileName) throws IOException {
+    public String getHash(Hash hash, String fileName) throws IOException {
         File file = new File(fileName);
         if (file.isDirectory()) {
             return null;
         }
-        String md5FromStream = getMD5fromStream(file);
-        if (md5FromStream != null) {
-            return md5FromStream;
+        String hashFromStream = getHashFromStream(hash, file);
+        if (hashFromStream != null) {
+            return hashFromStream;
         }
-
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            log.error(e);
-            return "";
-        }
-        // TODO: lock file while calculating MD5
+        // TODO: lock file while calculating hash
         long lastModified = file.lastModified();
-        AlternateDataStream md5ADS = new AlternateDataStream(file, "MD5");
+        AlternateDataStream hashADS = new AlternateDataStream(file, "Hash." + hash.name());
 
         long ttlRead = 0;
         long t = -System.currentTimeMillis();
-        
-        
-/*
-        FileChannel in = FileChannel.open(Paths.get(fileName));
-        ByteBuffer buffer = ByteBuffer.allocate(1024 * 128);
-        while (in.read(buffer) >= 0) {
-            buffer.flip();
-            ttlRead += buffer.remaining();
-            md.update(buffer);
-            buffer.clear();
-        };
-        in.close();
-*/
-        
+
+        Hash.Instance hi = hash.instance();
         for (ByteBuffer buffer: contents(fileName)) {
             ttlRead += buffer.remaining();
-            md.update(buffer);
+            hi.update(buffer);
         }
 
         t += System.currentTimeMillis();
         log.info("time=" + (t / 1000.0) + " sec, ttlRead=" + ttlRead + ", " + ((double)ttlRead * 0.00095367431640625 / t ) + " MB/sec");
-        
-        
-        byte[] mdbytes = md.digest();
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < mdbytes.length; i++) {
-            sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
-        }
-        String result = sb.toString();
+
+        String result = hi.getValueAsHex();
         if (file.canWrite() && (file.lastModified() == lastModified) && (file.length() > 32 * 1024)) {
             t = System.currentTimeMillis();
-            md5ADS.createIfNotExists().setContents(result + "@" + t);
+            hashADS.createIfNotExists().setContents(result + "@" + t);
             file.setLastModified(lastModified); // reset to original
         }
         return result;
@@ -106,12 +81,16 @@ public class Hashes extends ContentPlugin {
 
     private void defineHashField(final Hash h) {
         define(new Field.STRING(h.getName()) {
+            public boolean isDelayInOrder(String fileName) throws IOException {
+                File file = new File(fileName);
+                if (file.isDirectory())
+                    return false;
+                if (file.length() < 1024 * 50)
+                    return false;
+                return getHashFromStream(h, file) == null;
+            }
             public String getValue(String fileName) throws IOException {
-                Hash.Instance hi = h.instance();
-                for (ByteBuffer buffer: contents(fileName)) {
-                    hi.update(buffer);
-                }
-                return hi.getValueAsHex();
+                return getHash(h, fileName);
             }
         });
     }
@@ -120,23 +99,6 @@ public class Hashes extends ContentPlugin {
         for (Hash h: Hash.values()) {
             defineHashField(h);
         }
-
-
-
-        define(new Field.STRING("MD5x") {
-            public boolean isDelayInOrder(String fileName) throws IOException {
-                File file = new File(fileName);
-                if (file.isDirectory())
-                    return false;
-                if (file.length() < 1024 * 50)
-                    return false;
-                return getMD5fromStream(file) == null;
-            }
-            public String getValue(String fileName) throws IOException {
-                return getMD5(fileName);
-            }
-        });
-
     }
 
     public static void main(String... args) throws IOException {
