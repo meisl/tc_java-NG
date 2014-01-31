@@ -61,16 +61,16 @@ public class Hashes extends ContentPlugin {
         long ttlRead = 0;
         long t = -System.currentTimeMillis();
 
-        Hash.Instance hi = hash.instance();
+        Hash.Processor hp = hash.newProcessor();
         for (ByteBuffer buffer: contents(fileName)) {
             ttlRead += buffer.remaining();
-            hi.update(buffer);
+            hp.update(buffer);
         }
 
         t += System.currentTimeMillis();
         log.info("time=" + (t / 1000.0) + " sec, ttlRead=" + ttlRead + ", " + ((double)ttlRead * 0.00095367431640625 / t ) + " MB/sec");
 
-        String result = hi.getValueAsHex();
+        String result = hp.getValueAsHex();
         if (file.canWrite() && (file.lastModified() == lastModified) && (file.length() > 32 * 1024)) {
             t = System.currentTimeMillis();
             hashADS.createIfNotExists().setContents(result + "@" + t);

@@ -9,35 +9,27 @@ import java.security.NoSuchAlgorithmException;
 
 
 public enum Hash {
-    CRC32(32, new ChecksumFactory(java.util.zip.CRC32.class)),
-    Adler32(32, new ChecksumFactory(java.util.zip.Adler32.class)),
-    MD2(128, new MessageDigestFactory()),
-    MD5(128, new MessageDigestFactory()),
-    SHA1(160, new MessageDigestFactory()),
-    SHA256(256, new MessageDigestFactory("SHA-256")),
-    SHA384(384, new MessageDigestFactory("SHA-384")),
-    SHA512(512, new MessageDigestFactory("SHA-512"));
+    CRC32(32, Factory.fromChecksum(java.util.zip.CRC32.class)),
+    Adler32(32, Factory.fromChecksum(java.util.zip.Adler32.class)),
+    MD2(128, Factory.fromMessageDigest("MD2")),
+    MD5(128, Factory.fromMessageDigest("MD5")),
+    SHA1(160, Factory.fromMessageDigest("SHA1")),
+    SHA256(256, Factory.fromMessageDigest("SHA-256")),
+    SHA384(384, Factory.fromMessageDigest("SHA-384")),
+    SHA512(512, Factory.fromMessageDigest("SHA-512"));
 
 
-    public static abstract class Instance {
+    public static abstract class Processor {
 
-        private final Hash hash;
+        public final Hash hash;
 
-        Instance(Hash hash) {
+        Processor(Hash hash) {
             this.hash = hash;
         }
 
-        abstract void update(ByteBuffer buf);
+        public abstract Processor update(ByteBuffer buf);
 
         public abstract byte[] getValue();
-
-        public final String name() {
-            return this.hash.name();
-        }
-
-        public int bitLength() {
-            return this.hash.bitLength();
-        }
 
         public String getValueAsHex() {
             StringBuilder result = new StringBuilder();
@@ -54,93 +46,84 @@ public enum Hash {
 
     }
 
-    static interface Factory {
-        Instance instance(Hash hash);
-    }
+    static abstract class Factory {
 
-    static class ChecksumFactory implements Factory {
+        public abstract Processor newProcessor(Hash hash);
 
-        private Class<? extends java.util.zip.Checksum> checksumClass;
+        public static Factory fromChecksum(final Class<? extends java.util.zip.Checksum> checksumClass) {
+            return new Factory() {
 
-        ChecksumFactory(Class<? extends java.util.zip.Checksum> checksumClass) {
-            this.checksumClass = checksumClass;
-        }
-
-        Checksum checksumInstance() {
-            try {
-                return this.checksumClass.newInstance();
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public Instance instance(final Hash hash) {
-            return new Instance(hash) {
-                private Checksum cs = checksumInstance();
-                private byte[] byteArray = null;
-
-                void update(ByteBuffer buf) {
-                    if (buf.hasArray()) {
-                        byte[] byteArray = buf.array();
-                        cs.update(byteArray, buf.arrayOffset(), buf.remaining());
-                        buf.position(buf.limit());
-                    } else {
-                        if (this.byteArray == null) {
-                            this.byteArray = new byte[buf.capacity()];
-                        }
-                        while (buf.remaining() >= this.byteArray.length) {
-                            buf.get(this.byteArray);
-                        }
-                        int n = buf.remaining();
-                        if (n > 0) {
-                            buf.get(this.byteArray, 0, n);
-                            cs.update(this.byteArray, 0, n);
-                        }
+                Checksum checksumInstance() {
+                    try {
+                        return checksumClass.newInstance();
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (InstantiationException e) {
+                        throw new RuntimeException(e);
                     }
                 }
 
-                public byte[] getValue() {
-                    final long value = cs.getValue();
-                    return new byte[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value };
+                public Processor newProcessor(final Hash hash) {
+                    return new Processor(hash) {
+                        private Checksum cs = checksumInstance();
+                        private byte[] byteArray = null;
+
+                        public Processor update(ByteBuffer buf) {
+                            if (buf.hasArray()) {
+                                byte[] byteArray = buf.array();
+                                cs.update(byteArray, buf.arrayOffset(), buf.remaining());
+                                buf.position(buf.limit());
+                            } else {
+                                if (this.byteArray == null) {
+                                    this.byteArray = new byte[buf.capacity()];
+                                }
+                                while (buf.remaining() >= this.byteArray.length) {
+                                    buf.get(this.byteArray);
+                                }
+                                int n = buf.remaining();
+                                if (n > 0) {
+                                    buf.get(this.byteArray, 0, n);
+                                    cs.update(this.byteArray, 0, n);
+                                }
+                            }
+                            return this;
+                        }
+
+                        public byte[] getValue() {
+                            final long value = cs.getValue();
+                            return new byte[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value };
+                        }
+                    };
+                }
+            };
+        }
+
+        public static Factory fromMessageDigest(final String algorithmName) {
+            return new Factory() {
+
+                public Processor newProcessor(final Hash hash) {
+                    try {
+                        return new Processor(hash) {
+                            MessageDigest md = MessageDigest.getInstance(algorithmName);
+
+                            public Processor update(ByteBuffer buf) {
+                                md.update(buf);
+                                return this;
+                            }
+
+                            public byte[] getValue() {
+                                return md.digest();
+                            }
+                        };
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             };
         }
     }
 
-    static class MessageDigestFactory implements Factory {
-
-        private String algorithmName = null;
-
-        MessageDigestFactory(String algorithmName) {
-            this.algorithmName = algorithmName;
-        }
-
-        MessageDigestFactory() {
-        }
-
-        public Instance instance(final Hash hash) {
-            if (algorithmName == null) {
-                algorithmName = hash.name();
-            }
-            try {
-                return new Instance(hash) {
-                    MessageDigest md = MessageDigest.getInstance(algorithmName);
-
-                    void update(ByteBuffer buf) {
-                        md.update(buf);
-                    }
-
-                    public byte[] getValue() {
-                        return md.digest();
-                    }
-                };
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+/* ------------------------------------------------------------------------------------------ */
 
     private final int bitLength;
     private Factory factory;
@@ -154,8 +137,8 @@ public enum Hash {
         return this.bitLength;
     }
 
-    public Instance instance() {
-        return this.factory.instance(this);
+    public Processor newProcessor() {
+        return this.factory.newProcessor(this);
     }
 
 }
