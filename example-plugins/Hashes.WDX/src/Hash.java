@@ -8,15 +8,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 
+
 public enum Hash {
-    CRC32(32, Factory.fromChecksum(java.util.zip.CRC32.class)),
-    Adler32(32, Factory.fromChecksum(java.util.zip.Adler32.class)),
-    MD2(128, Factory.fromMessageDigest("MD2")),
-    MD5(128, Factory.fromMessageDigest("MD5")),
-    SHA1(160, Factory.fromMessageDigest("SHA1")),
-    SHA256(256, Factory.fromMessageDigest("SHA-256")),
-    SHA384(384, Factory.fromMessageDigest("SHA-384")),
-    SHA512(512, Factory.fromMessageDigest("SHA-512"));
+    CRC32(32, ProcessorFactory.fromChecksum(java.util.zip.CRC32.class)),
+    Adler32(32, ProcessorFactory.fromChecksum(java.util.zip.Adler32.class)),
+    MD2(128, ProcessorFactory.fromMessageDigest("MD2")),
+    MD5(128, ProcessorFactory.fromMessageDigest("MD5")),
+    SHA1(160, ProcessorFactory.fromMessageDigest("SHA1")),
+    SHA256(256, ProcessorFactory.fromMessageDigest("SHA-256")),
+    SHA384(384, ProcessorFactory.fromMessageDigest("SHA-384")),
+    SHA512(512, ProcessorFactory.fromMessageDigest("SHA-512"));
 
 
     public static abstract class Processor {
@@ -46,12 +47,12 @@ public enum Hash {
 
     }
 
-    static abstract class Factory {
+    static abstract class ProcessorFactory {
 
         public abstract Processor newProcessor(Hash hash);
 
-        public static Factory fromChecksum(final Class<? extends java.util.zip.Checksum> checksumClass) {
-            return new Factory() {
+        public static ProcessorFactory fromChecksum(final Class<? extends java.util.zip.Checksum> checksumClass) {
+            return new ProcessorFactory() {
 
                 Checksum checksumInstance() {
                     try {
@@ -98,8 +99,8 @@ public enum Hash {
             };
         }
 
-        public static Factory fromMessageDigest(final String algorithmName) {
-            return new Factory() {
+        public static ProcessorFactory fromMessageDigest(final String algorithmName) {
+            return new ProcessorFactory() {
 
                 public Processor newProcessor(final Hash hash) {
                     try {
@@ -126,9 +127,9 @@ public enum Hash {
 /* ------------------------------------------------------------------------------------------ */
 
     private final int bitLength;
-    private Factory factory;
+    private ProcessorFactory factory;
 
-    Hash(int bitLength, Factory factory) {
+    Hash(int bitLength, ProcessorFactory factory) {
         this.bitLength = bitLength;
         this.factory = factory;
     }
