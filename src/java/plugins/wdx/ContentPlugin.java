@@ -476,14 +476,17 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         for (String fileName: fileNames) {
             Path path = Paths.get(fileName);
             long size = Files.size(path);
+            System.out.println("TEST \"" + fileName + "\" (" + size + " bytes)");
             for (Field<?> f: fields) {
                 long t = -System.currentTimeMillis();
                 Object result = this.getValue(f, fileName);
                 t += System.currentTimeMillis();
-                double throughput = Math.round(size / ( (1 << 20) / 1e4 ) / t) / 10.0; // MB/sec
-                System.out.println("TEST [" + pluginName + "." + f.name + "] on \"" + fileName + "\": "
-                    + result + " (" + f.getJavaTypeName() + ")"
-                    + " " + throughput + " MB/sec"
+                double throughput = size / ( (1 << 20) / 1e3 ) / t;
+                System.out.println("\t[" + pluginName + "." + f.name + "]"
+                    + "\t(" + f.getJavaTypeName() + ")"
+                    + String.format("\t%6dms", t)
+                    + String.format("\t%6.1f MB/sec", throughput)
+                    + "\t" + result
                 );
             }
         }
