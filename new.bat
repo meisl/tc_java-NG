@@ -36,6 +36,15 @@ IF x%PLUGIN_NAME%==x (
   GOTO FAULT
 )
 
+:GOT_NAME
+SET DUMMY=x%3
+
+SET DESCRIPTION=%DUMMY:"=%
+IF "%DESCRIPTION%"=="x" (
+  ECHO missing arg: one-line description ^(enclose in double-quotes^)
+  GOTO FAULT
+)
+
 SET TEMPLATES=%ROOT%\templates
 SET PLUGIN_DIR=%ROOT%\example-plugins\%PLUGIN_NAME%.%PLUGIN_TYPE%
 SET SRC=%PLUGIN_DIR%\src
@@ -52,8 +61,13 @@ ECHO initializing %PLUGIN_TYPE% project %PLUGIN_NAME%: "%PLUGIN_DIR%"...
 MKDIR "%PLUGIN_DIR%"
 IF ERRORLEVEL 1 (
   ECHO error creating dir %PLUGIN_DIR%
+  ECHO.
   GOTO FAULT
 )
+
+REM strip leading x:
+ECHO %DESCRIPTION:~1%>>"%PLUGIN_DIR%\description.txt"
+type "%PLUGIN_DIR%\description.txt"
 
 COPY "%TEMPLATES%\build.bat" "%PLUGIN_DIR%\"
 
