@@ -9,14 +9,14 @@ import java.security.NoSuchAlgorithmException;
 
 
 public enum Hash {
-    CRC32("CRC32", 32, new ChecksumFactory() { Checksum checksumInstance() { return new java.util.zip.CRC32(); } }),
-    Adler32("Adler32", 32, new ChecksumFactory() { Checksum checksumInstance() { return new java.util.zip.Adler32(); } }),
-    MD2("MD2", 128, new MessageDigestFactory()),
-    MD5("MD5", 128, new MessageDigestFactory()),
-    SHA1("SHA1", 160, new MessageDigestFactory()),
-    SHA256("SHA-256", 256, new MessageDigestFactory()),
-    SHA384("SHA-384", 384, new MessageDigestFactory()),
-    SHA512("SHA-512", 512, new MessageDigestFactory());
+    CRC32(32, new ChecksumFactory(java.util.zip.CRC32.class)),
+    Adler32(32, new ChecksumFactory(java.util.zip.Adler32.class)),
+    MD2(128, new MessageDigestFactory()),
+    MD5(128, new MessageDigestFactory()),
+    SHA1(160, new MessageDigestFactory()),
+    SHA256(256, new MessageDigestFactory("SHA-256")),
+    SHA384(384, new MessageDigestFactory("SHA-384")),
+    SHA512(512, new MessageDigestFactory("SHA-512"));
 
 
     public static abstract class Instance {
@@ -31,8 +31,8 @@ public enum Hash {
 
         public abstract byte[] getValue();
 
-        public final String getName() {
-            return this.hash.getName();
+        public final String name() {
+            return this.hash.name();
         }
 
         public int bitLength() {
@@ -58,9 +58,23 @@ public enum Hash {
         Instance instance(Hash hash);
     }
 
-    static abstract class ChecksumFactory implements Factory {
+    static class ChecksumFactory implements Factory {
 
-        abstract Checksum checksumInstance();
+        private Class<? extends java.util.zip.Checksum> checksumClass;
+
+        ChecksumFactory(Class<? extends java.util.zip.Checksum> checksumClass) {
+            this.checksumClass = checksumClass;
+        }
+
+        Checksum checksumInstance() {
+            try {
+                return this.checksumClass.newInstance();
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         public Instance instance(final Hash hash) {
             return new Instance(hash) {
@@ -97,10 +111,22 @@ public enum Hash {
 
     static class MessageDigestFactory implements Factory {
 
+        private String algorithmName = null;
+
+        MessageDigestFactory(String algorithmName) {
+            this.algorithmName = algorithmName;
+        }
+
+        MessageDigestFactory() {
+        }
+
         public Instance instance(final Hash hash) {
+            if (algorithmName == null) {
+                algorithmName = hash.name();
+            }
             try {
                 return new Instance(hash) {
-                    MessageDigest md = MessageDigest.getInstance(hash.getName());
+                    MessageDigest md = MessageDigest.getInstance(algorithmName);
 
                     void update(ByteBuffer buf) {
                         md.update(buf);
@@ -116,18 +142,12 @@ public enum Hash {
         }
     }
 
-    private final String name;
     private final int bitLength;
     private Factory factory;
 
-    Hash(String name, int bitLength, Factory factory) {
-        this.name = name;
+    Hash(int bitLength, Factory factory) {
         this.bitLength = bitLength;
         this.factory = factory;
-    }
-
-    public String getName() {
-        return this.name;
     }
 
     public int bitLength() {

@@ -80,7 +80,7 @@ public class Hashes extends ContentPlugin {
     }
 
     private void defineHashField(final Hash h) {
-        define(new Field.STRING(h.getName()) {
+        define(new Field.STRING(h.name()) {
             public boolean isDelayInOrder(String fileName) throws IOException {
                 File file = new File(fileName);
                 if (file.isDirectory())
