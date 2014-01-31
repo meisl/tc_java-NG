@@ -1,0 +1,1 @@
+computes various hashes (CRC, MD5, SHA, ...) and stores them in NTFS Alternate Data Streams so that they need not be recomputed if the file didn't change
