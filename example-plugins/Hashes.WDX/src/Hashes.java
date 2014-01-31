@@ -58,18 +58,14 @@ public class Hashes extends ContentPlugin {
         long lastModified = file.lastModified();
         AlternateDataStream hashADS = new AlternateDataStream(file, "Hash." + hash.name());
 
-        long size = file.size();
+        long size = file.length();
         long t = -System.currentTimeMillis();
 
-        Hash.Processor hp = hash.newProcessor();
-        for (ByteBuffer buffer: contents(fileName)) {
-            hp.update(buffer);
-        }
+        String result = hash.getValue(contents(fileName));
 
         t += System.currentTimeMillis();
         log.info("time=" + (t / 1000.0) + " sec, size=" + size + ", " + ((double)size * 0.00095367431640625 / t ) + " MB/sec");
 
-        String result = hp.getValueAsHex();
         if (file.canWrite() && (file.lastModified() == lastModified) && (file.length() > 32 * 1024)) {
             t = System.currentTimeMillis();
             hashADS.createIfNotExists().setContents(result + "@" + t);

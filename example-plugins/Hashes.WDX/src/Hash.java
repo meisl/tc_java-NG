@@ -30,11 +30,11 @@ public enum Hash {
 
         public abstract Processor update(ByteBuffer buf);
 
-        public abstract byte[] getValue();
+        public abstract byte[] getValueAsBytes();
 
-        public String getValueAsHex() {
+        public String getValue() {
             StringBuilder result = new StringBuilder();
-            byte[] bytes = this.getValue();
+            byte[] bytes = this.getValueAsBytes();
             for (int i = 0; i < bytes.length; i++) {
                 int b = bytes[i] & 0xFF;
                 if (b < 0x10) {
@@ -90,7 +90,7 @@ public enum Hash {
                             return this;
                         }
 
-                        public byte[] getValue() {
+                        public byte[] getValueAsBytes() {
                             final long value = cs.getValue();
                             return new byte[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value };
                         }
@@ -112,7 +112,7 @@ public enum Hash {
                                 return this;
                             }
 
-                            public byte[] getValue() {
+                            public byte[] getValueAsBytes() {
                                 return md.digest();
                             }
                         };
@@ -140,6 +140,30 @@ public enum Hash {
 
     public Processor newProcessor() {
         return this.factory.newProcessor(this);
+    }
+
+    public String getValue(ByteBuffer buf) {
+        return newProcessor().update(buf).getValue();
+    }
+
+    public byte[] getValueAsBytes(ByteBuffer buf) {
+        return newProcessor().update(buf).getValueAsBytes();
+    }
+
+    public String getValue(Iterable<ByteBuffer> bufs) {
+        Processor p = newProcessor();
+        for (ByteBuffer buf: bufs) {
+            p.update(buf);
+        }
+        return p.getValue();
+    }
+
+    public byte[] getValueAsBytes(Iterable<ByteBuffer> bufs) {
+        Processor p = newProcessor();
+        for (ByteBuffer buf: bufs) {
+            p.update(buf);
+        }
+        return p.getValueAsBytes();
     }
 
 }
