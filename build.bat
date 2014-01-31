@@ -138,7 +138,13 @@ IF "%1"=="dist" (
   REM ECHO creating "%ZIP_PATH%"...
 
   REM note the ^( and ^), they're escapes
-  ECHO * [%PLUGIN_DIR%]^(%ZIP_URL%^): TODO: description>>"%DIST%\README.md"
+  <NUL SET /p=* [%PLUGIN_DIR%]^(%ZIP_URL%^) >>"%DIST%\README.md"
+  IF EXIST "%PLUGIN_PATH%\description.txt" (
+    TYPE "%PLUGIN_PATH%\description.txt">>"%DIST%\README.md"
+    ECHO. >>"%DIST%\README.md"
+  ) ELSE (
+    ECHO TODO: ^(description.txt missing from plugin folder^)>>"%DIST%\README.md"
+  )
 
   MKDIR "%TEMP%" 2>NUL
   COPY "%PLUGIN_PATH%\dist\*" "%TEMP%\" >NUL
