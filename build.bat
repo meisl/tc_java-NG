@@ -1,86 +1,224 @@
 @ECHO OFF
-SET MY_DIR=%CD%
-SET DIST=%CD%\dist
-SET ZIP_TEMPLATE=%CD%\templates\plugin.zip
 
-SET JAVA_HOME=c:\Programme\Java\jdk1.7.0_25
-SET JAVALIB=%COMMANDER_PATH%\javalib
-
-SET MY_CLASS_PATH=%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar
-SET JAR=%JAVA_HOME%\bin\jar
-set JDOC=%JAVA_HOME%\bin\javadoc
-
-MKDIR bin 2>NUL
-DEL /S /Q bin >NUL
-MKDIR %DIST% 2>NUL
-DEL %DIST%\tc-apis-NG.jar 2>NUL
-
-ECHO compiling tc-apis-NG in %MY_DIR%...
-
-%JAVA_HOME%\bin\javac -Xlint -cp %MY_CLASS_PATH% -sourcepath src\java -d bin src\java\plugins\*.java src\java\plugins\wcx\*.java src\java\plugins\wdx\*.java  src\java\plugins\wfx\*.java  src\java\plugins\wlx\*.java
+CALL :FIND_JAVA_AND_TC
 IF ERRORLEVEL 1 (
   EXIT /B 1
 )
+IF "%1"=="init" (
+  EXIT /B 0
+)
+IF DEFINED ROOTBUILDRUNNING (
+  REM ECHO ROOTBUILDRUNNING=%ROOTBUILDRUNNING%
+  EXIT /B 0
+)
 
-%JAR% cf %DIST%\tc-apis-NG.jar -C bin plugins
+SETLOCAL ENABLEDELAYEDEXPANSION
+IF ERRORLEVEL 1 (
+  ECHO no delayed expansion!
+  GOTO FAULT
+)
+
+SET ROOTBUILDRUNNING=1
+
+SET ROOT=%~dp0
+REM strip trailing backslash:
+SET ROOT=%ROOT:~0,-1%
+
+SET SRC=%ROOT%\src\java
+SET BIN=%ROOT%\bin
+SET SCRATCH=%ROOT%\scratch
+SET DIST=%ROOT%\dist
+SET JDOC=%ROOT%\doc\api
+SET TEMP=%ROOT%\dist\temp
+SET TEMPLATES=%ROOT%\templates
+
+ECHO compiling tc-apis-NG...
+CALL :MAKE_CLEAN_SCRATCH
+MKDIR "%DIST%" 2>NUL
+DEL "%DIST%\tc-apis-NG.jar" 2>NUL
+
+DIR /S /B "%SRC%\*.java" >>"%SCRATCH%\classes"
+
+REM ECHO @classes:
+REM TYPE "%SCRATCH%\classes"
+
+SET MY_CP="%JAVALIB%\swt-win32-3.1.2.jar;%JAVALIB%\commons-logging-api-1.0.4.jar"
+ECHO -Xlint>"%SCRATCH%\options"
+ECHO -cp %MY_CP:\=/%>>"%SCRATCH%\options"
+ECHO -d "%BIN:\=/%">>"%SCRATCH%\options"
+
+REM ECHO @options:
+REM TYPE "%SCRATCH%\options"
+
+javac @"%SCRATCH%\options" @"%SCRATCH%\classes"
+IF ERRORLEVEL 1 (
+  ECHO tc-apis-NG failed!
+  ECHO.
+  GOTO FAULT
+)
+
+jar cf "%DIST%\tc-apis-NG.jar" -C "%BIN%" .
+ECHO tc-apis-NG done.
+ECHO.
 
 rem RMDIR /S /Q bin\plugins >NUL 2>&1
 
 IF "%1"=="jdoc" (
-  ECHO creating javadoc in doc\api\...
-  RMDIR /S /Q "%MY_DIR%\doc\api" >NUL 2>&1
-  MKDIR "%MY_DIR%\doc\api" 2>NUL
-  %JDOC% -d doc\api -quiet -classpath %MY_CLASS_PATH% -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath src\java -subpackages plugins
+  ECHO creating javadoc in "%JDOC%\"...
+  RMDIR /S /Q "%JDOC%" >NUL 2>&1
+  MKDIR "%JDOC%" 2>NUL
+  javadoc -d "%JDOC%" -quiet -classpath "%MY_CP%" -use -author -windowtitle "tc_java API" -doctitle "Total Commander Plugin Interface API" -sourcepath "%SRC%" -subpackages plugins
 )
 
 IF "%1"=="dist" (
   DEL /S /Q "%DIST%\*.zip" >NUL 2>&1
-  RMDIR /S /Q "%DIST%\temp" >NUL 2>&1
-  COPY /Y templates\dist-README-0.md "%MY_DIR%\dist\README.md" >NUL
+  RMDIR /S /Q "%TEMP%" >NUL 2>&1
+  COPY /Y "%TEMPLATES%\dist-README-0.md" "%DIST%\README.md" >NUL
 
-  CD example-plugins\
-  FOR /D %%i in (*) do (
-    CD %%i
-    CALL build.bat
+  FOR /D %%i in ("%ROOT%\example-plugins\*") do (
+    REM ECHO calling "%%i\build.bat"...
+    CALL "%%i\build.bat"
     IF ERRORLEVEL 1 (
-      ECHO %%i %PLUGIN_TYPE% failed!
+      ECHO %%i failed
     ) ELSE (
-      SET PLUGIN_TYPE=WDX
-      ECHO %%i %PLUGIN_TYPE% done.
-      ECHO(
-
-      REM note the ^( and ^), they're escapes
-      ECHO * [%%i]^(http://github.com/meisl/tc_java-NG/blob/master/dist/%%i.zip?raw=true^), %PLUGIN_TYPE%: TODO: description>>"%MY_DIR%\dist\README.md"
-
-      MKDIR "%DIST%\temp" 2>NUL
-      REM everything from plugin's dist\ into our %DIST%\temp\:
-      COPY dist\* "%DIST%\temp\" >NUL
-      DEL /Q "%DIST%\temp\.gitignore" >NUL 2>&1
-
-      COPY "%ZIP_TEMPLATE%\rename-me.w_x" "%DIST%\temp\%%i.%PLUGIN_TYPE%" >NUL
-      COPY "%ZIP_TEMPLATE%\license.txt" "%DIST%\temp\" >NUL
-      COPY "%ZIP_TEMPLATE%\errormessages.ini" "%DIST%\temp\" >NUL
-      COPY "%ZIP_TEMPLATE%\tc_javaplugin.ini.stub" "%DIST%\temp\tc_javaplugin.ini" >NUL
-
-      ECHO [%PLUGIN_TYPE%]>>"%DIST%\temp\tc_javaplugin.ini"
-      ECHO CLASS=%%i>>"%DIST%\temp\tc_javaplugin.ini"
-
-      ECHO [plugininstall]>>"%DIST%\temp\pluginst.inf"
-      ECHO description=%PLUGIN_TYPE% plugin %%i>>"%DIST%\temp\pluginst.inf"
-      ECHO type=%PLUGIN_TYPE%>>"%DIST%\temp\pluginst.inf"
-      ECHO file=%%i.%PLUGIN_TYPE%>>"%DIST%\temp\pluginst.inf"
-      ECHO defaultdir=%%i>>"%DIST%\temp\pluginst.inf"
-
-      %JAR% cMf "%DIST%\%%i.zip" -C "%DIST%\temp" .
-      %JAR% uMf "%DIST%\%%i.zip" -C "%DIST%" tc-apis-NG.jar
-
-      RMDIR /S /Q "%DIST%\temp" >NUL 2>&1
+      CALL :MAKE_DIST %%i
+      IF ERRORLEVEL 1 (
+        ECHO %%i failed
+      )
     )
-    CD ..
+    ECHO.
   )
-  TYPE "%MY_DIR%\templates\dist-README-1.md" >>"%MY_DIR%\dist\README.md"
-
+  TYPE "%TEMPLATES%\dist-README-1.md" >>"%DIST%\README.md"
 )
 
+
 :DONE
-CD "%MY_DIR%"
+  CALL :DELETE_SCRATCH
+  ENDLOCAL & EXIT /B 0
+
+
+:FAULT
+  CALL :DELETE_SCRATCH
+  ENDLOCAL & EXIT /B 1
+
+
+:MAKE_CLEAN_SCRATCH
+  CALL :DELETE_SCRATCH
+  MKDIR %SCRATCH%
+  EXIT /B 0
+
+
+:DELETE_SCRATCH
+  RMDIR /S /Q "%SCRATCH%" >NUL 2>&1
+  EXIT /B 0
+
+
+:MAKE_DIST
+  SETLOCAL ENABLEDELAYEDEXPANSION
+  SET PLUGIN_PATH=%1
+  SET PLUGIN_DIR=%~nx1
+  SET PLUGIN_NAME=%~n1
+  SET PLUGIN_TYPE=%~x1
+  IF x%PLUGIN_TYPE%==x GOTO MAKE_DIST_INVALID_TYPE
+  REM remove leading dot:
+  SET PLUGIN_TYPE=%PLUGIN_TYPE:~1%
+  IF x%PLUGIN_TYPE%==xWDX GOTO MAKE_DIST_NAME_OK
+  IF x%PLUGIN_TYPE%==xWCX GOTO MAKE_DIST_NAME_OK
+  IF x%PLUGIN_TYPE%==xWLX GOTO MAKE_DIST_NAME_OK
+  IF x%PLUGIN_TYPE%==xWFX GOTO MAKE_DIST_NAME_OK
+  GOTO MAKE_DIST_INVALID_TYPE
+
+:MAKE_DIST_NAME_OK
+  SET ZIP_NAME=%PLUGIN_DIR%.zip
+  SET ZIP_PATH=%DIST%\%ZIP_NAME%
+  SET ZIP_TEMPLATE=%TEMPLATES%\plugin.zip
+  SET ZIP_URL=http://github.com/meisl/tc_java-NG/blob/master/dist/%ZIP_NAME%?raw=true
+  
+  REM ECHO creating "%ZIP_PATH%"...
+
+  REM note the ^( and ^), they're escapes
+  <NUL SET /p=* [%PLUGIN_DIR%]^(%ZIP_URL%^): >>"%DIST%\README.md"
+  IF EXIST "%PLUGIN_PATH%\description.txt" (
+    TYPE "%PLUGIN_PATH%\description.txt">>"%DIST%\README.md"
+    ECHO.>>"%DIST%\README.md"
+  ) ELSE (
+    ECHO TODO: ^(description.txt missing from plugin folder^)>>"%DIST%\README.md"
+  )
+
+  MKDIR "%TEMP%" 2>NUL
+  REM everything from plugin's dist\ into our %TEMP%\:
+  COPY "%PLUGIN_PATH%\dist\*" "%TEMP%\" >NUL
+  DEL /Q "%TEMP%\.gitignore" >NUL 2>&1
+
+  COPY "%ZIP_TEMPLATE%\rename-me.w_x" "%TEMP%\%PLUGIN_DIR%" >NUL
+  COPY "%ZIP_TEMPLATE%\license.txt" "%TEMP%\" >NUL
+  COPY "%ZIP_TEMPLATE%\errormessages.ini" "%TEMP%\" >NUL
+  COPY "%ZIP_TEMPLATE%\tc_javaplugin.ini.stub" "%TEMP%\tc_javaplugin.ini" >NUL
+
+  ECHO [%PLUGIN_TYPE%]>>"%TEMP%\tc_javaplugin.ini"
+  ECHO CLASS=%PLUGIN_NAME%>>"%TEMP%\tc_javaplugin.ini"
+
+  ECHO [plugininstall]>>"%TEMP%\pluginst.inf"
+  ECHO description=%PLUGIN_TYPE% plugin %PLUGIN_NAME%>>"%TEMP%\pluginst.inf"
+  ECHO type=%PLUGIN_TYPE%>>"%TEMP%\pluginst.inf"
+  ECHO file=%PLUGIN_DIR%>>"%TEMP%\pluginst.inf"
+  ECHO defaultdir=%PLUGIN_NAME%>>"%TEMP%\pluginst.inf"
+
+  jar cMf "%ZIP_PATH%" -C "%TEMP%" .
+  jar uMf "%ZIP_PATH%" -C "%DIST%" tc-apis-NG.jar
+  ECHO %ZIP_NAME% created.
+
+  RMDIR /S /Q "%TEMP%" >NUL 2>&1
+  ENDLOCAL & EXIT /B 0
+
+:MAKE_DIST_INVALID_TYPE
+  ECHO invalid plugin type "%PLUGIN_TYPE%"
+:MAKE_DIST_FAULT
+  RMDIR /S /Q "%TEMP%" >NUL 2>&1
+  ENDLOCAL & EXIT /B 1
+
+
+
+:FIND_JAVA_AND_TC
+  REM first check if javac is on the PATH:
+  FOR /F %%i IN ("javac.exe") DO (
+    IF NOT "%%~$PATH:i"=="" (
+      GOTO FIND_JAVA_AND_TC_FOUNDJAVA
+    )
+  )
+
+  IF NOT EXIST "%JAVA_HOME%\bin\javac*" (
+    FOR /D %%i IN (%PROGRAMFILES%\java\*) DO (
+      IF EXIST "%%i\bin\javac*" (
+        PATH %%i\bin;%PATH%
+        GOTO FIND_JAVA_AND_TC_FOUNDJAVA
+      )
+    )
+    ECHO could not find JDK in "%PROGRAMFILES%\java\"!
+    EXIT /B 1
+  )
+
+:FIND_JAVA_AND_TC_FOUNDJAVA
+  IF NOT EXIST "%COMMANDER_PATH%\plugins\" (
+    FOR /D %%i IN (%PROGRAMFILES%\*) DO (
+      IF "%%i"=="%PROGRAMFILES%\totalcmd" (
+        IF EXIST "%PROGRAMFILES%\totalcmd\plugins\" (
+          SET COMMANDER_PATH=%%i
+          GOTO FIND_JAVA_AND_TC_FOUNDTC
+        )
+      )
+    )
+    ECHO could not find TC in "%PROGRAMFILES%\"!
+    ECHO please open command prompt *from within TC*
+    EXIT /B 1
+  )
+
+:FIND_JAVA_AND_TC_FOUNDTC
+  SET JAVALIB=%COMMANDER_PATH%\javalib
+  IF NOT EXIST "%JAVALIB%" (
+    ECHO missing "%JAVALIB%\"!
+    ECHO please extract javalib.tgz to "%JAVALIB%\"
+    EXIT /B 1
+  )
+ 
+  EXIT /B 0

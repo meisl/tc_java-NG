@@ -40,14 +40,21 @@ FOR %%i IN ("%DIST%\*") DO (
 ECHO compiling %MY_TYPE% %MY_NAME% to "%BIN%\"...
 
 javac -Xlint -cp %MY_CP% -sourcepath %SRC% -d "%BIN%" "%SRC%"\*.java
-IF ERRORLEVEL 1 (
+IF ERRORLEVEL 1 (
   ECHO %MY_DIR% failed!
   EXIT /B 1
 )
 
 jar cf "%JAR_NAME%" -C "%BIN%" .
-REM COPY "%MY_PATH%\whatever-else-you-need" "%DIST%\" >NUL
+COPY "%MY_PATH%\vendor\lads\lads.exe" "%DIST%\" >NUL
+COPY "%MY_PATH%\vendor\streams\streams.exe" "%DIST%\" >NUL
 
+IF "%1"=="test" (
+  rem CD test
+  rem createTestFiles.bat
+  rem CD ..
+  java -cp %MY_CP%;"%JAR_NAME%" Main %2 %3 %4 %5 %6 %7 %8 %9
+)
 
 :DONE
   ENDLOCAL & EXIT /B 0
