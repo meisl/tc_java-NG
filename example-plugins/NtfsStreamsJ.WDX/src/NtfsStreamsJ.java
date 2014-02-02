@@ -1,6 +1,6 @@
 
-import plugins.wdx.ContentPlugin;
 import plugins.AlternateDataStream;
+import plugins.wdx.*;
 import fun.*;
 import seq.*;
 
@@ -11,7 +11,6 @@ import java.nio.channels.*;
 import java.nio.file.*;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.regex.*;
 
 /* Mark Russinovich's <a href="http://technet.microsoft.com/de-de/sysinternals/bb897440">streams.exe</a> v1.56

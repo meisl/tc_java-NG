@@ -6,6 +6,9 @@ import java.io.IOException;
 import static plugins.wdx.FieldValue.*;
 
 
+/**
+  * @author Matthias Kling (meisl)
+  */
 public abstract class EditableField<T> extends Field<T> {
 
     public static abstract class STRING extends EditableField<String> {

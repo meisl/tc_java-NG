@@ -2,6 +2,9 @@ package plugins;
 
 import java.io.*;
 
+/**
+  * @author Matthias Kling (meisl)
+  */
 public class AlternateDataStream {
 
     public static final int CP_HASH        = 0x23;  // "#".codePointAt(0);

@@ -18,6 +18,8 @@ import plugins.wdx.FieldValue;
 import static plugins.wdx.FieldValue.*;
 
 /** Base class for content (WDX) plugins.
+  *
+  * @author Matthias Kling (meisl)
   */
 public abstract class ContentPlugin extends WDXPluginAdapter {
 
@@ -343,12 +345,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         if (this.fields.size() < 0) {
             throw new RuntimeException(pluginName + " should define at least 1 field");
         }
-        
-        // no field name too long
-        for (Field<?> f: fields) {
-            f.assertValidNameLength();
-        }
-        
+
         for (String fileName: fileNames) {
             Path path = Paths.get(fileName);
             long size = Files.size(path);

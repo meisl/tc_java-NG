@@ -5,7 +5,9 @@ import java.io.IOException;
 
 import static plugins.wdx.FieldValue.*;
 
-
+/**
+  * @author Matthias Kling (meisl)
+  */
 public abstract class Field<T> {
 
     /** Found that (my) TotalCommander on (my) WinXP always passes 259 as

@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.util.regex.*;
 
 import plugins.*;
+import plugins.wdx.*;
 import plugins.wdx.ContentPlugin;
 
 

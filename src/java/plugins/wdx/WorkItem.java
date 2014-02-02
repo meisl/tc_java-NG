@@ -6,8 +6,14 @@ import java.util.*;
 import static plugins.wdx.ContentPlugin.*;
 
 
+/**
+  * @author Matthias Kling (meisl)
+  */
 public class WorkItem {
 
+    /**
+      * @author Matthias Kling (meisl)
+      */
     public static class Store {
 
         static final class NullStore extends Store {
