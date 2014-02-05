@@ -3,7 +3,9 @@ package plugins.wdx;
 
 import java.io.IOException;
 
+import plugins.*;
 import static plugins.wdx.FieldValue.*;
+
 
 /**
   * @author Matthias Kling (meisl)
@@ -40,6 +42,30 @@ public abstract class Field<T> {
         public abstract int getValue(String fileName) throws IOException;
     }
 
+    public static abstract class FILETIME extends Field<FileTime> {
+        protected FILETIME(String name) {
+            super(name, FT_DATETIME, FileTime.class);
+        }
+        final FileTime _getValue(String fileName) throws IOException {
+            return getValue(fileName);
+        }
+        public abstract FileTime getValue(String fileName) throws IOException;
+    }
+
+    public static abstract class ENUM<E extends Enum<E>> extends Field<E> {
+        protected ENUM(String name, Class<E> enumClass) {
+            super(name, FT_MULTIPLECHOICE, enumClass);
+        }
+        final E _getValue(String fileName) throws IOException {
+            return getValue(fileName);
+        }
+        public abstract E getValue(String fileName) throws IOException;
+    }
+
+
+    /* ----- Field: non-static members -------------------------------------- */
+
+
     public final String name;
     public final int type;
     public final Class<T> javaType;
@@ -58,7 +84,7 @@ public abstract class Field<T> {
     }
     
     public boolean isDelayInOrder(String fileName) throws IOException {
-        return false;
+        return true;
     }
 
     public String getJavaTypeName() {

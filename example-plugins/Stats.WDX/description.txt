@@ -1,0 +1,1 @@
+custom attributes for files and folders, eg for the latter: most recent lastModified of contained files
