@@ -113,12 +113,11 @@ public class Stats extends ContentPlugin {
             Path path = Paths.get(fileName);
             return getFolderCount(path);
         }});
-/*
+
         define(new EntryType.Field("type") { public EntryType getValue(String fileName) throws IOException {
             Path path = Paths.get(fileName);
             return EntryType.which(path);
         }});
-*/
 
     }
 
