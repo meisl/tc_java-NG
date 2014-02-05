@@ -104,12 +104,12 @@ public class Stats extends ContentPlugin {
             return result;
         }});
 
-        define(new Field.INT("entryCount") { public int getValue(String fileName) throws IOException {
+        define(new Field.INTEGER("entryCount") { public Integer getValue(String fileName) throws IOException {
             Path path = Paths.get(fileName);
             return getEntryCount(path);
         }});
 
-        define(new Field.INT("folderCount") { public int getValue(String fileName) throws IOException {
+        define(new Field.INTEGER("folderCount") { public Integer getValue(String fileName) throws IOException {
             Path path = Paths.get(fileName);
             return getFolderCount(path);
         }});

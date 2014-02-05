@@ -241,7 +241,7 @@ public class NtfsStreamsJ extends ContentPlugin {
         defineFixedStreamName("\u0005OzngklrtOwudrp0bAayojd1qWh");
         defineFixedStreamName("\u0005SebiesnrMkudrfcoIaamtykdDa");
 
-        define(new Field.INT("count") { public int getValue(String fileName) throws IOException {
+        define(new Field.INTEGER("count") { public Integer getValue(String fileName) throws IOException {
             return getCount(fileName);
         }});
 

@@ -26,21 +26,13 @@ public abstract class Field<T> {
         protected STRING(String name) {
             super(name, FT_STRING, String.class);
         }
-        final String _getValue(String fileName) throws IOException {
-            return getValue(fileName);
         }
-        public abstract String getValue(String fileName) throws IOException;
-    }
 
-    public static abstract class INT extends Field<Integer> {
-        protected INT(String name) {
+    public static abstract class INTEGER extends Field<Integer> {
+        protected INTEGER(String name) {
             super(name, FT_NUMERIC_32, Integer.class);
         }
-        final Integer _getValue(String fileName) throws IOException {
-            return getValue(fileName);
         }
-        public abstract int getValue(String fileName) throws IOException;
-    }
 
     public static abstract class FILETIME extends Field<FileTime> {
         protected FILETIME(String name) {
@@ -77,7 +69,7 @@ public abstract class Field<T> {
         assertValidName();
     }
 
-    abstract T _getValue(String fileName) throws IOException;
+    public abstract T getValue(String fileName) throws IOException;
 
     public final boolean isEditable() {
         return this instanceof EditableField;

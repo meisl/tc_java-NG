@@ -2,7 +2,7 @@
 
     protected void initFields() {
 
-        define(new Field.INT("foo") { public int getValue(String fileName) throws IOException {
+        define(new Field.INTEGER("foo") { public Integer getValue(String fileName) throws IOException {
             return fileName.length();
         }});
 

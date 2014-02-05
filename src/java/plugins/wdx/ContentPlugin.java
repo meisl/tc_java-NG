@@ -64,7 +64,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
     }
 
     public <T> T getValue(Field<T> field, String fileName) throws IOException {
-        return field._getValue(fileName);
+        return field.getValue(fileName);
     }
 
     public <T> T getValue(String fieldName, String fileName) throws IOException {
@@ -277,7 +277,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
         WorkItem workItem = pending.newItem(fileName, field, unitIndex);
         try {
             try {
-                Object value = field._getValue(fileName);
+                Object value = field.getValue(fileName);
                 workItem.cleanup();
                 myLog.warn("end " + (isSlow ? "slow " : "") + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
                 fieldValue.setValue(field.type, value);

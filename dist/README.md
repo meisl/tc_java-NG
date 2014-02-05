@@ -6,6 +6,7 @@
 ##### Plugins
 * [Hashes.WDX](http://github.com/meisl/tc_java-NG/blob/master/dist/Hashes.WDX.zip?raw=true): computes various hashes (CRC, MD5, SHA, ...) and stores them in NTFS Alternate Data Streams so that they need not be recomputed if the file didn't change
 * [NtfsStreamsJ.WDX](http://github.com/meisl/tc_java-NG/blob/master/dist/NtfsStreamsJ.WDX.zip?raw=true): TODO: (description.txt missing from plugin folder)
+* [Stats.WDX](http://github.com/meisl/tc_java-NG/blob/master/dist/Stats.WDX.zip?raw=true): custom attributes for files and folders, eg for the latter: most recent lastModified of contained files
 
 ##### For developers
 * javalib.tgz (TODO): to be extracted under TC's installation folder, eg `%PROGRAMFILES%\totalcmd\javalib`
