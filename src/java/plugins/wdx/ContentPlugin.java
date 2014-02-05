@@ -280,6 +280,9 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 Object value = field.getValue(fileName);
                 workItem.cleanup();
                 myLog.warn("end " + (isSlow ? "slow " : "") + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
+                if (value == null) {
+                    return FT_FIELDEMPTY;
+                }
                 fieldValue.setValue(field.type, value);
                 return field.type;
             } catch (UncheckedIOException e) {
