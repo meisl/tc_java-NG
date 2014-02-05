@@ -280,11 +280,7 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 Object value = field.getValue(fileName);
                 workItem.cleanup();
                 myLog.warn("end " + (isSlow ? "slow " : "") + field.name + " after " + workItem.getTime() + "ms: " + value + " for \"" + fileName + "\"");
-                if (value == null) {
-                    return FT_FIELDEMPTY;
-                }
-                fieldValue.setValue(field.type, value);
-                return field.type;
+                return field.transfer(value, fieldValue);
             } catch (UncheckedIOException e) {
                 //throw e.inner;
                 throw (IOException)e.getCause();
@@ -358,12 +354,13 @@ public abstract class ContentPlugin extends WDXPluginAdapter {
                 Object result = this.getValue(f, fileName);
                 t += System.currentTimeMillis();
                 double throughput = size / ( (1 << 20) / 1e3 ) / t;
-                System.out.println("\t[" + pluginName + "." + f.name + "]"
+                System.out.print("\t[" + pluginName + "." + f.name + "]"
                     + "\t(" + f.getJavaTypeName() + ")"
                     + String.format("\t%6dms", t)
                     + String.format("\t%6.1f MB/sec", throughput)
                     + "\t" + result
                 );
+                System.out.println("\t(" + f.transfer(result, new FieldValue()) + ")");
             }
         }
     }

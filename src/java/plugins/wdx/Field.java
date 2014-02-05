@@ -29,7 +29,9 @@ public abstract class Field<T> {
     }
 
     public static abstract class INTEGER extends Field<Integer> {
+
         protected INTEGER(String name) {
+
             super(name, FT_NUMERIC_32, Integer.class);
         }
     }
@@ -38,20 +40,15 @@ public abstract class Field<T> {
         protected FILETIME(String name) {
             super(name, FT_DATETIME, FileTime.class);
         }
-        final FileTime _getValue(String fileName) throws IOException {
-            return getValue(fileName);
         }
-        public abstract FileTime getValue(String fileName) throws IOException;
-    }
 
     public static abstract class ENUM<E extends Enum<E>> extends Field<E> {
         protected ENUM(String name, Class<E> enumClass) {
             super(name, FT_MULTIPLECHOICE, enumClass);
         }
-        final E _getValue(String fileName) throws IOException {
-            return getValue(fileName);
+        int transfer(Object value, FieldValue fieldValue) {
+            return super.transfer( (value != null) ? value.toString() : null, fieldValue );
         }
-        public abstract E getValue(String fileName) throws IOException;
     }
 
 
@@ -71,12 +68,20 @@ public abstract class Field<T> {
 
     public abstract T getValue(String fileName) throws IOException;
 
-    public final boolean isEditable() {
-        return this instanceof EditableField;
-    }
-    
     public boolean isDelayInOrder(String fileName) throws IOException {
         return true;
+    }
+
+    int transfer(Object value, FieldValue fieldValue) {
+        if (value == null) {
+            return FT_FIELDEMPTY;
+        }
+        fieldValue.setValue(this.type, value);
+        return this.type;
+    }
+
+    public final boolean isEditable() {
+        return this instanceof EditableField;
     }
 
     public String getJavaTypeName() {
@@ -86,7 +91,7 @@ public abstract class Field<T> {
     public String toString() {
         return getJavaTypeName() + " " + name;
     }
-    
+
     final void assertValidNameLength() {
         assertValidNameLength(MAX_NAME_LENGTH);
     }
@@ -95,7 +100,7 @@ public abstract class Field<T> {
         if (this.name.length() > maxlen)
             throw new IllegalArgumentException("field name too long (" + name.length() + " > " + maxlen + "): \"" + name + "\"");
     }
-    
+
     final void assertValidName() {
         if (name == null) {
             throw new IllegalArgumentException("field name must not be null!");

@@ -39,7 +39,7 @@ public abstract class EditableField<T> extends Field<T> {
     }
 
     abstract void _setValue(String fileName, FieldValue value) throws IOException;
-    
+
     public abstract void setValue(String fileName, T value) throws IOException;
 
 }
