@@ -141,9 +141,9 @@ IF "%1"=="dist" (
   <NUL SET /p=* [%PLUGIN_DIR%]^(%ZIP_URL%^): >>"%DIST%\README.md"
   IF EXIST "%PLUGIN_PATH%\description.txt" (
     TYPE "%PLUGIN_PATH%\description.txt">>"%DIST%\README.md"
-    ECHO.>>"%DIST%\README.md"
   ) ELSE (
     ECHO TODO: ^(description.txt missing from plugin folder^)>>"%DIST%\README.md"
+    rem ECHO.>>"%DIST%\README.md"
   )
 
   MKDIR "%TEMP%" 2>NUL
