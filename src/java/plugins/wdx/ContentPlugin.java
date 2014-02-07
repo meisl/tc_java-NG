@@ -23,7 +23,7 @@ import static plugins.wdx.FieldValue.*;
   */
 public abstract class ContentPlugin extends WDXPluginAdapter {
 
-    public static final int FT_SETSUCCESS = 0; // missing in tc-apis
+    public static final int FT_SETSUCCESS = 0; // missing from original tc-apis
 
     private static final Log myLog = LogFactory.getLog(ContentPlugin.class);
     protected static Log log;
