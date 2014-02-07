@@ -3,6 +3,18 @@ package plugins.wdx;
 
 public abstract class AbstractContentPlugin extends WDXPluginAdapter implements TypesafeWDXPlugin {
 
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String contentGetDetectString(int maxlen) {
+        return getDetectString(maxlen);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final int contentGetSupportedField(int fieldIndex,
                                               StringBuffer fieldName,
@@ -12,6 +24,25 @@ public abstract class AbstractContentPlugin extends WDXPluginAdapter implements 
         return getSupportedField(fieldIndex, fieldName, units, maxlen).intValue();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final int contentGetDefaultSortOrder(int fieldIndex) {
+        return getDefaultSortOrder(fieldIndex).intValue();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int contentGetSupportedFieldFlags(int fieldIndex) {
+        return getSupportedFieldFlags(fieldIndex).intValue();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final int contentGetValue(String fileName,
                                         int fieldIndex,
@@ -30,6 +61,19 @@ public abstract class AbstractContentPlugin extends WDXPluginAdapter implements 
         ;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void contentStopGetValue(
+        String fileName
+    ) {
+        stopGetValue(fileName);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final int contentSetValue(
         String fileName,
@@ -43,6 +87,9 @@ public abstract class AbstractContentPlugin extends WDXPluginAdapter implements 
         return setValue(fileName, fieldIndex, unitIndex, FieldType.fromInt(fieldType), fieldValue, typedFlags).intValue();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int contentEditValue(
         int parentWin,
@@ -58,8 +105,15 @@ public abstract class AbstractContentPlugin extends WDXPluginAdapter implements 
         return editValue(parentWin, fieldIndex, unitIndex, FieldType.fromInt(fieldType), fieldValue, maxlen, typedFlags, langidentifier).intValue();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void contentSendStateInformation(int state, String path) {
+    public void contentSendStateInformation(
+        int state,
+        String path
+    ) {
         sendStateInformation(State.fromInt(state), path);
     }
+
 }
