@@ -22,7 +22,7 @@ public interface FieldType extends RV.GetValue {
 }
 */
 
-public enum FieldType implements RV.GetValueCanDelay, RV.GetValueImmediate {
+public enum FieldType implements RV.GetSupportedField, RV.GetValueCanDelay, RV.GetValueImmediate {
 
     BOOLEAN          (FT_BOOLEAN),
     STRING           (FT_STRING),
